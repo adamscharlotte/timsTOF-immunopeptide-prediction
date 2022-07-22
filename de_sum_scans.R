@@ -2,29 +2,81 @@ library(tidyverse)
 library(data.table)
 
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
+pool <- "TUM_HLA_16"    # "TUM_aspn_1_2", "TUM_HLA_16", "TUM_lysn_5"
+plate <- "20220624_HLAI_1_96"    # 20220624_HLAI_1_96, 20220621_AspNlysN
 
-setwd(paste(base_path, "MaxQuant/AspN/aspn_1_2-txt/", sep = ""))
-setwd(paste(base_path, "MaxQuant/HLA-I/HLA_16-txt/", sep = ""))
-setwd(paste(base_path, "MaxQuant/LysN/LysN_5-txt/", sep = ""))
-
-# setwd(paste(base_path, "MaxQuant/LysN/LysN_5_3-txt/", sep = "") -> fractions
-# setwd(paste(base_path, "MaxQuant/LysN/LysN_5_no_min_max-txt/", sep = "")
-# -> min and max peptide length is important
-
-qc_path <- paste(base_path, "metadata/QC.txt", sep = "")
-
+setwd(paste(base_path, "MaxQuant/", plate, "/", pool, "-txt/", sep = ""))
 list.files()
 
-tbl_pasef <- fread("pasefMsmsScans.txt") %>% as_tibble
-tbl_pasef %>% select(-c(`Raw file`, IsolationWidth))
-tbl_pasef %>% group_by(Precursor) %>%
-    mutate(difference=IsolationMz - lag(IsolationMz)) %>%
-    ungroup() %>%
-    select(difference) %>%
-    unique()
-tbl_single_scan <- tbl_pasef %>% count(Precursor) %>% filter(n == 1)
+tbl_info <- tibble(pool_name = pool, pool_PSMs = nrow(tbl_msms),
+    fasta_size = nrow(tbl_pool))
 
 tbl_msms <- fread("msms.txt") %>% as_tibble
+tbl_scans <- fread("accumulatedMsmsScans.txt") %>%
+    as_tibble %>%
+    filter(`Scan number` %in% tbl_msms$`Scan number`) %>%
+    mutate(Precursor = `PASEF precursor IDs`) %>%
+    # Split the precursor ID and create a new row for each
+    mutate(Precursor = strsplit(as.character(Precursor), ";")) %>%
+    unnest(Precursor) %>%
+    mutate(pool_name = pool) %>%
+    unique()
+
+# The following resulted in more PSMs than in msms.txt
+# there seems to be another filter that is applied
+# filter(!Sequence == "" & is.na(Reverse)) %>%
+
+meta_path <- paste(base_path, "metadata/full-pool-sequence.txt", sep = "")
+tbl_meta <- fread(meta_path) %>% as_tibble
+tbl_pool <- tbl_meta %>%
+    filter(pool_name == pool) %>%
+    mutate(trunc_sequence = str_sub(Sequence, start = -7)) %>%
+    rename(Sequence_pool = Sequence) %>%
+    unique()
+
+tbl_filtered_scans <- merge(tbl_scans, tbl_pool, by = "pool_name") %>%
+    as_tibble() %>%
+    filter(stringr::str_ends(Sequence, trunc_sequence))
+
+tbl_pasef <- fread("pasefMsmsScans.txt") %>% as_tibble
+tbl_scans_pasef <- merge(tbl_filtered_scans, tbl_pasef, by = "Precursor") %>%
+    as_tibble()
+
+tbl_scans_pasef %>% select(Sequence) %>% unique()
+
+# Number of full-length sequences
+tbl_filtered_scans %>%
+    filter(Sequence == Sequence_pool) %>%
+    select(Sequence) %>%
+    unique()
+
+all_sequences <- tbl_filtered_scans %>%
+    pull(Sequence) %>%
+    unique()
+
+tbl_scans %>%
+    filter(!Sequence %in% all_sequences) %>%
+    select(Sequence) %>%
+    unique()
+
+# ----------------------------------------------------------------------------
+tbl_pool %>% filter(stringr::str_starts(Sequence, tbl_truncated$Sequence))
+
+# The frame and scan beginning and end can be found in tbl_scans_pasef
+# and can be mapped to get the raw scans.
+
+qc_path <- paste(base_path, "metadata/QC.txt", sep = "")
+tbl_qc <- fread(qc_path) %>% as_tibble
+
+tbl_scans_pasef %>% select(Precursor) %>% unique()
+tbl_scans_pasef %>% pull(`PASEF precursor IDs`)
+tbl_pasef %>% filter(!Precursor %in% tbl_scans$`PASEF precursor IDs`)
+tbl_msms_scans %>% filter(Sequence.x == Sequence.y)
+
+tbl_msms_scans %>%
+    select()
+tbl_single_scan <- tbl_pasef %>% count(Precursor) %>% filter(n == 1)
+
 tbl_msms %>% select(Proteins) %>% unique()
 tbl_msms %>% select(Sequence) %>% unique()
 tbl_msms %>% filter(`Scan number` == 5255)
@@ -34,18 +86,9 @@ tbl_msms %>%
     unique() %>%
     count(`Missed cleavages`)
 
-tbl_scans <- fread("accumulatedMsmsScans.txt") %>% as_tibble
 tbl_scans %>% filter(`PASEF precursor IDs` == tbl_single_scan$Precursor)
 
-meta_path <- paste(paste(base_path, "metadata/LysN-meta.txt", sep = ""))
-tbl_meta <- fread(meta_path) %>% as_tibble %>% select(pool_name, Sequence)
-tbl_qc <- fread(qc_path) %>% as_tibble
 
-tbl_pool <- tbl_meta %>% filter(pool_name == "TUM_lysn_5") %>% unique()
-tbl_pool %>%
-    mutate(trunc_sequence = substr(Sequence, 1, 7)) %>%
-    select(trunc_sequence) %>%
-    unique()
 
 tbl_truncated <- tbl_msms %>%
     select(Sequence) %>%
@@ -54,7 +97,6 @@ tbl_truncated <- tbl_msms %>%
 
 list_truncated <- tbl_truncated  %>% pull(Sequence) %>% paste(collapse = "|")
 
-tbl_pool %>% filter(stringr::str_starts(Sequence, tbl_truncated$Sequence))
 
 # tbl_found_truncated <- (tbl_pool, grepl(list_truncated, Sequence))
 # tbl_found_truncated <- (tbl_truncated, grepl(list_truncated, Sequence))
