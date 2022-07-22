@@ -1,6 +1,11 @@
 library(tidyverse)
 library(data.table)
 
-tbl_AspN <- fread("/Users/adams/Projects/300K/20220613-library-test/metadata/AspN.txt") %>% as_tibble
-tbl_AspN_poolname <- tbl_AspN %>% select(`Pool name`) %>% unique()
-fwrite(tbl_AspN_poolname, "/Users/adams/Projects/300K/20220613-library-test/metadata/poolnames/AspN_names.txt", col.names=FALSE)
+base_path <- "/Users/adams/Projects/300K/2022-library-run/"
+output_path <- paste(base_path, "metadata/poolnames/All.txt", sep = "")
+peptide_path <- paste(base_path, "metadata/full-pool-sequence.txt", sep = "")
+tbl_peptides <- fread(peptide_path) %>% as_tibble
+
+tbl_poolnames <- tbl_peptides %>% select(pool_name) %>% unique()
+
+fwrite(tbl_poolnames, output_path, col.names = FALSE)
