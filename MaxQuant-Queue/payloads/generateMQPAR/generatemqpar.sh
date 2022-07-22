@@ -19,27 +19,29 @@ if [ -e $LOC ]; then
 fi
 
 MSPLATE=$(grep $NAME $MAPPING | awk -F "," -v x=$MSPLATE_POSITION '{print $x}' | uniq)
+LMAPPING="localMapping.txt"
 
 #add real files
-grep $MSPLATE $MAPPING | grep $NAME | awk -F "," '{print $1".d,"$2","$3","$4""}' > $MAPPING-$NAME
+grep $MSPLATE $MAPPING | grep $NAME | awk -F "," '{print $1".d,"$2","$3","$4""}' > $LMAPPING
+
 # grep $MSPLATE $MAPPING | grep DMSO | awk -F "," '{print $1".raw,"$2","$2","$4",1,1"}' >> $MAPPING-$NAME
 
 # #add ctrl files
 # ls $DMSO_FOLDER | awk -F "," -v x=$MSPLATE '{print $1","substr($1, 1, length($1)-4)","substr($1, 1, length($1)-4)","x",1,0"}' >> $MAPPING-$NAME
 
-sed -e "s#%%RAW_FOLDER%%#`cat $MAPPING-$NAME |
+sed -e "s#%%RAW_FOLDER%%#`cat $LMAPPING |
 	awk -F "," -v x=$RAW_FOLDER_POSITION '{print $x}' |
 	sed -e "s/^/     \<string\>/g" | sed -e "s/$/\<\/string\>/g" |
 	tr "\n" "|"`#g" |
-	sed -e "s#%%FASTA_FILE%%#`cat $MAPPING-$NAME |
+	sed -e "s#%%FASTA_FILE%%#`cat $LMAPPING |
 		awk -F "," -v x=$FASTA_FILE_POSITION '{print $x}' |
 		sed -e "s/^/     \<string\>/g" | sed -e "s/$/\<\/string\>/g" |
 		tr "\n" "|"`#g" |
-	sed -e "s#%%MAX_LENGT%%#`cat $MAPPING-$NAME |
+	sed -e "s#%%MAX_LENGT%%#`cat $LMAPPING |
 		awk -F "," -v x=$MAX_LENGT_POSITION '{print $x}' |
 		sed -e "s/^/     \<string\>/g" | sed -e "s/$/\<\/string\>/g" |
 		tr "\n" "|"`#g" |
-	sed -e "s#%%OUTPUT_FOLDER%%#`cat $MAPPING-$NAME |
+	sed -e "s#%%OUTPUT_FOLDER%%#`cat $LMAPPING |
 		awk -F "," -v x=$OUTPUT_FOLDER_POSITION '{print $x}' |
 		sed -e "s/^/     \<string\>/g" | sed -e "s/$/\<\/string\>/g" |
 		tr "\n" "|"`#g" |
