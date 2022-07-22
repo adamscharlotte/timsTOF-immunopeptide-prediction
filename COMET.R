@@ -181,3 +181,13 @@ tbl_peprec <- tbl_conc_confidence_filtered %>%
 
 fwrite(tbl_peprec, file="/Users/adams/Downloads/Kuster/peprec.tsv", sep='\t')
 "controllerType=0 controllerNumber=1 scan="
+
+# --------------------------------------------------------------------------------------------------------------------------------
+
+library(tidyverse)
+library(data.table)
+
+tbl_conc_confidence <- fread("/Users/adams/Downloads/Hela/test/crux-output/assign-confidence.target.txt") %>% as_tibble
+
+tbl_conc_confidence_filtered <- tbl_conc_confidence %>% filter(`tdc q-value` < 0.01)
+tbl_conc_confidence_filtered %>% select(sequence, `protein id`, charge) %>% unique()

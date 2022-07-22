@@ -1,0 +1,3 @@
+_name,_MQ_version,_pre_payload,_post_payload,_threads,_project,_fasta_file,_raw_folder,_phospho,_protease,_alt_mqpar_base,_tmt_corr_factors
+Coleoptile,1.5.3.8,cpAndGenerateMQpar,cleanPostSearch,13,RICE,Rice_UniProt.fasta,w/Rice/Rice_2020/rawfiles/,0,Trypsin/P,,
+Radicle,1.5.3.8,cpAndGenerateMQpar,cleanPostSearch,14,RICE,Rice_UniProt.fasta,w/Rice/Rice_2020/rawfiles/,0,Trypsin/P,,
