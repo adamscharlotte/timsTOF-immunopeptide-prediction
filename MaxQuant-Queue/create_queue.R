@@ -6,7 +6,7 @@ path <- "ProteomeTools\\\\External_data\\\\Bruker\\\\UA-TimsTOF-300K\\\\"
 local_path <- "/Users/adams/Projects/300K/2022-library-run/"
 full_meta_map_path <- paste(local_path, "metadata/full-meta-map.txt", sep = "")
 queue_path <- paste(local_path, "MaxQuant/Queue/queue.csv", sep = "")
-min_max_length <- 17
+min_max_length <- 11
 tbl_full_meta_map <- fread(full_meta_map_path) %>% as_tibble
 
 tbl_queue <- tbl_full_meta_map %>%
