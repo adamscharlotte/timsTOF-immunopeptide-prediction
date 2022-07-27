@@ -28,6 +28,8 @@ function run() {
 	FASTA_FILE=$(echo $1 | awk -F "," '{print $7}' | tr -d " ")
 	RAW_FOLDER=$(echo $1 | awk -F "," '{print $8}' | tr -d " ")
 	MAX_LENGTH=$(echo $1 | awk -F "," '{print $9}' | tr -d " ")
+	BASE_MQPAR=$(echo $1 | awk -F "," '{print $10}' | tr -d " ")
+	OUTPUT_FOLDER=$(echo $1 | awk -F "," '{print $11}' | tr -d " ")
 	# PHOSPHO=$(echo $1 | awk -F "," '{print $9}' | tr -d " ")
 	# PROTEASE=$(echo $1 | awk -F "," '{print $10}' | tr -d " \r\n")
 	# ALT_BASE_MQPAR=$(echo $1 | awk -F "," '{print $11}' | tr -d " \r\n")
@@ -76,8 +78,8 @@ function run() {
 	if [ "$PRE_PAYLOAD" != "" ]; then
 		# echo -E "starting pre-payload $PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $PHOSPHO $PROTEASE $ALT_BASE_MQPAR $TMT_CORR_FACTORS_FILE $PEPTIDE_FDR $PROTEIN_FDR"
 		# $PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $PHOSPHO $PROTEASE $ALT_BASE_MQPAR $TMT_CORR_FACTORS_FILE $PEPTIDE_FDR $PROTEIN_FDR
-		echo -E "starting pre-payload $PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $MAX_LENGTH"
-		$PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $MAX_LENGTH
+		echo -E "starting pre-payload $PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $MAX_LENGTH $BASE_MQPAR $OUTPUT_FOLDER"
+		$PRE_PAYLOAD $NAME $BASE $THREADS $FASTA_FILE $RAW_FOLDER $MAX_LENGTH $BASE_MQPAR $OUTPUT_FOLDER
 		RT_CODE=$?
 		echo -E "pre payload returned $RT_CODE"
 		if [ $RT_CODE -eq 1 ]; then
@@ -90,7 +92,8 @@ function run() {
 		UUPATH=$(pwd)
 		echo -E "Attempting to start $NAME with $THREADS threads in $MQPAR with version $VERSION ($PRE_PAYLOAD, $POST_PAYLOAD)"
 		echo -E "Sitting in $UUPATH"
-		
+		echo "`cygpath -u "$MAXQUANT_PREFIX$VERSION$MAXQUANT_SUFFIX"` mqpar.xml"
+		`cygpath -u "$MAXQUANT_PREFIX$VERSION$MAXQUANT_SUFFIX"` mqpar.xml
 		# case $VERSION in
 		# 	"1.5.3.8"|"1.6.12.0")
 		# 		if [ "$LOCAL_PROCESSING" = "1" ]; then
