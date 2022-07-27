@@ -1,2 +1,0 @@
-pool, MQ_version, pre_payload, post_payload, threads, project, fasta_file, raw_folder, output_folder, max_length
-lysn_1, 2.1.2.0, cpAndGenerateMQpar, cleanPostSearch, 1, UA-TimsTOF-300K, .fasta, w/Rice/Rice_2020/rawfiles/, , 
