@@ -17,3 +17,8 @@ tbl_qc <- tibble(Sequence = list_all_qc) %>%
 
 min(tbl_qc$length)
 max(tbl_qc$length)
+
+tbl_full_qc<- tbl_qc %>% filter(!str_detect(Sequence, "PEPTIDE"))
+
+qc_path <- "/Users/adams/Projects/300K/2022-library-run/metadata/qc-peptides.txt"
+fwrite(tbl_full_qc, qc_path, col.names=T, sep="\t")
