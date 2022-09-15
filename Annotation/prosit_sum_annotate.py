@@ -15,15 +15,15 @@ from fundamentals.constants import ALPHABET
 from mgf_filter.util import timeStamped
 from mgf_filter.masterSpectrum import MasterSpectrum
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("pool", type=str)					# Filename
-# args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("pool", type=str)					# Filename
+args = parser.parse_args()
 
-pool = "TUM_HLA_16"
+# pool = "TUM_HLA_16"
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-# un_annot_path = base_path + "precursor-consensus/un-annotated/" + args.pool + ".csv"
-un_annot_path = base_path + "precursor-consensus/un-annotated/" + pool + ".csv"
+un_annot_path = base_path + "precursor-consensus/un-annotated/" + args.pool + ".csv"
+# un_annot_path = base_path + "precursor-consensus/un-annotated/" + pool + ".csv"
 un_annot_df = pd.read_csv(un_annot_path)
 file_path = base_path + "precursor-consensus/annotated/full-truncated-qc-un-callibrated-precursor-consensus.hdf5"
 
@@ -47,7 +47,6 @@ for index, line in un_annot_df.iterrows():
 
 bin_result_df_collapsed = bin_result_df.groupby("PRECURSOR").agg(list)
 un_annot_df_combined = pd.merge(un_annot_df, bin_result_df_collapsed, on="PRECURSOR")
-# list(un_annot_df_combined.columns)
 
 un_annot_df_combined.rename(columns = {"CHARGE": "PRECURSOR_CHARGE"}, inplace=True)
 un_annot_df_combined["REVERSE"].fillna(False, inplace=True)
@@ -84,7 +83,6 @@ full_df[col_filter] = full_df[un_annot_df_combined[col_filter] >= 70][col_filter
 filtered_annot_df = full_df.dropna()
 
 # -----------------------------------------------------------------------------
-# list(filtered_annot_df.columns)
 
 def int_to_onehot(charge):
     precursor_charge = np.full((6), False)
@@ -157,28 +155,3 @@ else:
     h5f.create_dataset("sequence_integer", data=sequence_integers, compression="gzip", chunks=True, maxshape=(None,32))
     h5f.create_dataset("retention_time", data=retention_time, compression="gzip", chunks=True, maxshape=(None,))
     h5f.close()
-
-# -----------------------------------------------------------------------------
-
-# df = pd.DataFrame(data=[[21, 1],[32, -4],[-4, 14],[3, 17],[-7,70]], columns=["a", "b"])
-# df
-
-# cols = ["b"]
-# df[cols] = df[df[cols] > 2][cols]
-# df.dropna()
-
-    def load_from_tims(self, spectra, ignoreCharges, delta_func=calculate_Delta_by_ppm(40)):
-        up = 0
-        for _, spectrum in spectra.iterrows():
-            up = up + 1
-            rel_int = calculateRelativeIntensity(spectrum["combined_INTENSITIES"])
-            charge_of_spectrum = str(spectrum["CHARGE"])
-            print(spectrum)
-            for m, i in zip(spectrum["combined_MZ"], rel_int):
-                p = Peak(float(m), float(i), delta_func)
-                if ignoreCharges:
-                    self.add(p, 0)
-                else:
-                    self.add(p, charge_of_spectrum)
-
-un_annot_df_combined.iloc[:1]
