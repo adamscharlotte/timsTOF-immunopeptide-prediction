@@ -7,8 +7,8 @@ args <- commandArgs(trailingOnly = TRUE)
 pool <- args[1]
 # pool <- "TUM_HLA_16"
 
-base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
-# base_path <- "/Users/adams/Projects/300K/2022-library-run/"
+# base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
+base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
 txt_output_path <- paste(base_path, "Metadata/info-sum.txt", sep = "")
