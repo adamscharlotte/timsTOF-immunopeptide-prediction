@@ -18,7 +18,9 @@ spaceless <- function(x) {
     x
     }
 
-tbl_mapped_precursor <- fread(mapped_precursor_path) %>% as_tibble() %>% spaceless()
+tbl_mapped_precursor <- fread(mapped_precursor_path) %>%
+    as_tibble() %>%
+    spaceless()
 
 # -----------------------------------------------------------------------------
 # Info.txt
@@ -52,14 +54,28 @@ tbl_filtered_pool_frames <- tbl_pool_psms %>%
     select(Scan_number, frame, Precursor, Sequence) %>%
     distinct()
 
-tbl_psms <- tbl_mapped_precursor %>% select(Scan_number, Sequence) %>% distinct()
-tbl_pool_psms <- tbl_pool_psms %>% select(Scan_number, Sequence) %>% distinct()
-tbl_qc_psms <- tbl_qc_psms %>% select(Scan_number, Sequence) %>% distinct()
-tbl_filtered_pool_psms <- tbl_filtered_pool_frames %>% select(Scan_number, Sequence) %>% distinct()
-tbl_filtered_qc_psms <- tbl_filtered_qc_frames %>% select(Scan_number, Sequence) %>% distinct()
-tbl_unique_pool_peptides <- tbl_filtered_pool_frames %>% select(Sequence) %>% distinct()
-tbl_full_length <- tbl_filtered_pool_frames %>% filter(Sequence %in% tbl_pool$Sequence_pool) %>%
-    select(Sequence) %>% distinct
+tbl_psms <- tbl_mapped_precursor %>%
+    select(Scan_number, Sequence) %>%
+    distinct()
+tbl_pool_psms <- tbl_pool_psms %>%
+    select(Scan_number, Sequence) %>%
+    distinct()
+tbl_qc_psms <- tbl_qc_psms %>%
+    select(Scan_number, Sequence) %>%
+    distinct()
+tbl_filtered_pool_psms <- tbl_filtered_pool_frames %>%
+    select(Scan_number, Sequence) %>%
+    distinct()
+tbl_filtered_qc_psms <- tbl_filtered_qc_frames %>%
+    select(Scan_number, Sequence) %>%
+    distinct()
+tbl_unique_pool_peptides <- tbl_filtered_pool_frames %>%
+    select(Sequence) %>%
+    distinct()
+tbl_full_length <- tbl_filtered_pool_frames %>%
+    filter(Sequence %in% tbl_pool$Sequence_pool) %>%
+    select(Sequence) %>%
+    distinct()
 tbl_filtered_qc_precursors <- tbl_filtered_qc_frames %>%
     select(Precursor, frame, Sequence) %>%
     distinct() %>%
@@ -101,8 +117,8 @@ fwrite(tbl_annotation, output_path)
 tbl_info <- tibble(pool_name = pool, PSMs = nrow(tbl_psms),
     max_length = max(tbl_pool_psms$Length),
     pool_PSMs = nrow(tbl_pool_psms), qc_PSMs = nrow(tbl_qc_psms),
-    filtered_pool_psms = nrow(tbl_filtered_pool_psms), 
-    filtered_qc_psms = nrow(tbl_filtered_qc_psms), 
+    filtered_pool_psms = nrow(tbl_filtered_pool_psms),
+    filtered_qc_psms = nrow(tbl_filtered_qc_psms),
     pool_unique_peptides = nrow(tbl_unique_pool_peptides),
     full_length = nrow(tbl_full_length),
     # truncated = nrow(tbl_truncated),
@@ -117,5 +133,3 @@ tbl_info <- tibble(pool_name = pool, PSMs = nrow(tbl_psms),
 )
 
 fwrite(tbl_info, txt_output_path, append = TRUE)
-
-# -----------------------------------------------------------------------------
