@@ -51,7 +51,7 @@ tbl_filtered_precursors <- tbl_filtered_psms %>%
     distinct() %>%
     add_count(Precursor, frame) %>%
     filter(n == 1)
-colnames(tbl_mapped_precursor)
+
 tbl_annotation <- tbl_mapped_precursor %>%
     filter(obs_sequence %in% tbl_filtered_precursors$obs_sequence &
         Precursor %in% tbl_filtered_precursors$Precursor) %>%
