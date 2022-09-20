@@ -2,355 +2,92 @@
 # install.packages("scales")
 library(tidyverse)
 library(data.table)
-library(ggtext)
-library(scales)
+args <- commandArgs(trailingOnly = TRUE)
 
-hla_16_sum_path <- "/Users/adams/Projects/300K/2022-library-run/Annotation/precursor-consensus/summed/TUM_HLA_16.csv"
-tbl_hla_16_sum <- fread(hla_16_sum_path) %>% as_tibble()
+pool <- args[1]
+precursor <- args[2]
 
-hla_16_path <- "/Users/adams/Projects/300K/2022-library-run/Annotation/full-truncated-qc/un-annotated/TUM_HLA_16.csv"
-tbl_hla_16 <- fread(hla_16_path) %>% as_tibble()
-colnames(tbl_hla_16_sum)
+# pool <- "TUM_HLA2_31"
+# precursor <- "12063"
 
-tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    select(COLLISION_ENERGY, MODIFIED_SEQUENCE, PRECURSOR, FRAME) %>%
-    pull(COLLISION_ENERGY)
+base_path <- "/Users/adams/Projects/300K/2022-library-run/Annotation/"
+sum_path <- paste(base_path, "precursor-consensus/summed/", pool, ".csv", sep = "") # nolint
+frame_path <- paste(base_path, "full-truncated-qc/un-annotated/", pool, ".csv", sep = "") # nolint
 
-tbl_hla_16_sum %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    select(COLLISION_ENERGY, MODIFIED_SEQUENCE, PRECURSOR) %>%
-    pull(COLLISION_ENERGY)
+# -------------------------- Load the summed spectrum -------------------------
+tbl_sum <- fread(sum_path) %>% as_tibble()
 
-tbl_1565_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    # count(FRAME) %>% distinct()
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES)
-
-tbl_1565 <- cbind(tbl_1565_mz, tbl_1565_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-plot_1565 <- ggplot(tbl_1565) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-# ---------------------------------------------------------
-
-tbl_1565_sum_i <- tbl_hla_16_sum %>%
-    filter(MODIFIED_SEQUENCE == "KQGPTGIHV") %>%
-    filter(PRECURSOR == "1565") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = str_sub(INTENSITIES, 2, -2)) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ", ")) %>%
-    unnest(INTENSITIES)
-
-tbl_1565_sum_mz <- tbl_hla_16_sum %>%
-    filter(MODIFIED_SEQUENCE == "KQGPTGIHV") %>%
-    filter(PRECURSOR == "1565") %>%
+tbl_sum_mz <- tbl_sum %>%
+    filter(PRECURSOR == precursor) %>%
     select(MZ) %>%
     mutate(MZ = str_sub(MZ, 2, -2)) %>%
     mutate(MZ = strsplit(as.character(MZ), ", ")) %>%
     unnest(MZ)
 
-tbl_1565_sum <- cbind(tbl_1565_sum_mz, tbl_1565_sum_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-plot_1565_sum <- ggplot(tbl_1565_sum) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-# ---------------------------------------------------------
-
-tbl_1565_1803_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1803") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_1803_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1803") %>%
+tbl_sum_i <- tbl_sum %>%
+    filter(PRECURSOR == precursor) %>%
     select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES)
-
-tbl_1565_1803 <- cbind(tbl_1565_1803_mz, tbl_1565_1803_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-tbl_1565_sum_1803 <- tbl_1565_sum %>%
-    rename(sum_INTENSITIES = INTENSITIES) %>%
-    left_join(tbl_1565_1803) %>%
-    mutate(INTENSITIES = replace_na(INTENSITIES, 0))
-
-
-plot_1565_1803 <- ggplot(tbl_1565_sum_1803) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    geom_col(aes(x = MZ, y = -sum_INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-# -----------------------------------------------------------------------------
-
-tbl_1565_1804_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1804") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_1804_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1804") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES)
-
-tbl_1565_1804 <- cbind(tbl_1565_1804_mz, tbl_1565_1804_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-plot_1565_1804 <- ggplot(tbl_1565_1804) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-# -----------------------------------------------------------------------------
-
-tbl_1565_1805_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1805") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_1805_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1805") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES)
-
-tbl_1565_1805 <- cbind(tbl_1565_1805_mz, tbl_1565_1805_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-plot_1565_1805 <- ggplot(tbl_1565_1805) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-# -----------------------------------------------------------------------------
-
-tbl_1602_1817_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1602") %>%
-    filter(FRAME == "1817") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1602_1817_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1602") %>%
-    filter(FRAME == "1817") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES)
-
-tbl_1602_1817 <- cbind(tbl_1602_1817_mz, tbl_1602_1817_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ)) %>%
-    mutate(INTENSITIES = as.double(INTENSITIES))
-
-plot_1602_1817 <- ggplot(tbl_1602_1817) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1110)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
-
-
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Spectra/HLA_16_1565_1803.png" # nolint
-ggsave(path_plot, plot_1565_1803, width = 10.5, height = 6, units = "cm")
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Spectra/HLA_16_1565_1804.png" # nolint
-ggsave(path_plot, plot_1565_1804, width = 10.5, height = 6, units = "cm")
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Spectra/HLA_16_1565_1805.png" # nolint
-ggsave(path_plot, plot_1565_1805, width = 10.5, height = 6, units = "cm")
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Spectra/HLA_16_1602_1817.png" # nolint
-ggsave(path_plot, plot_1602_1817, width = 10.5, height = 6, units = "cm")
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Spectra/HLA_16_1565.png" # nolint
-ggsave(path_plot, plot_1565, width = 10.5, height = 6, units = "cm")
-
-
-
-
-# -----------------------------------------------------------------------------
-spaceless <- function(x) {
-    colnames(x) <- gsub(" ", "_", colnames(x))
-    x
-    }
-
-msms_path <- "/Users/adams/Projects/300K/2022-library-run/MaxQuant/20220624_HLAI_1_96/TUM_HLA_16-txt/msms.txt"
-tbl_msms <- fread(msms_path) %>% as_tibble() %>% spaceless()
-
-tbl_msms %>% filter(Scan_number == 2502) %>% select(Matches)
-colnames(tbl_msms)
-
-# -----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-##############################################################################
-
-tbl_1565_1803_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1803") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_1803_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1803") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
+    mutate(INTENSITIES = str_sub(INTENSITIES, 2, -2)) %>%
+    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ", ")) %>%
     unnest(INTENSITIES) %>%
-    mutate(INTENSITIES = rescale(as.integer(INTENSITIES), to = c(0, 100)))
+    mutate(INTENSITIES = as.double(INTENSITIES))
 
-tbl_1565_1803 <- cbind(tbl_1565_1803_mz, tbl_1565_1803_i) %>%
+tbl_sum_normi <- tbl_sum_i %>%
+    mutate(INTENSITIES = (INTENSITIES) / (max(tbl_sum_i$INTENSITIES)))
+
+tbl_sum_mzi <- cbind(tbl_sum_mz, tbl_sum_normi) %>%
     as_tibble() %>%
-    mutate(MZ = as.integer(MZ))
+    mutate(MZ = as.integer(MZ)) %>%
+    mutate(INTENSITIES = as.double(INTENSITIES))
 
-max(tbl_1565_1803$INTENSITIES)
+# ------------------------ Load spectrum for each frame -----------------------
 
-plot_1565_1803 <- ggplot(tbl_1565_1803) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1550)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
+tbl_frame <- fread(frame_path) %>% as_tibble()
 
-# -----------------------------------------------------------------------------
+list_frame <- tbl_frame %>%
+    filter(PRECURSOR == precursor) %>%
+    pull(FRAME)
 
-tbl_1565_1804_mz <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1804") %>%
-    select(MZ) %>%
-    mutate(MZ = strsplit(as.character(MZ), ";")) %>%
-    unnest(MZ)
-
-tbl_1565_1804_i <- tbl_hla_16 %>%
-    filter(MODIFIED_SEQUENCE == "_KQGPTGIHV_") %>%
-    filter(PRECURSOR == "1565") %>%
-    filter(FRAME == "1804") %>%
-    select(INTENSITIES) %>%
-    mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
-    unnest(INTENSITIES) %>%
-    mutate(INTENSITIES = rescale(as.integer(INTENSITIES), to = c(0, 100)))
-
-tbl_1565_1804 <- cbind(tbl_1565_1804_mz, tbl_1565_1804_i) %>%
-    as_tibble() %>%
-    mutate(MZ = as.integer(MZ))
-
-plot_1565_1804 <- ggplot(tbl_1565_1804) +
-    geom_col(aes(x = MZ, y = INTENSITIES)) +
-    # theme_bw() +
-    # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
-    theme_minimal() +
-    labs(x = "*m/Z*", y = "Intensity") +
-    theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.x = ggtext::element_markdown()) +
-    scale_x_continuous(limits = c(-0, 1550)) +
-    geom_hline(yintercept = 0, size = 0.1) +
-    geom_vline(xintercept = 0, size = 0.1)
+for (i in list_frame) {
+    frame <- i
+    tbl_frame_mz <- tbl_frame %>%
+        filter(PRECURSOR == precursor) %>%
+        filter(FRAME == frame) %>%
+        select(MZ) %>%
+        mutate(MZ = strsplit(as.character(MZ), ";")) %>%
+        unnest(MZ)
+    tbl_frame_i <- tbl_frame %>%
+        filter(PRECURSOR == precursor) %>%
+        filter(FRAME == frame) %>%
+        select(INTENSITIES) %>%
+        mutate(INTENSITIES = strsplit(as.character(INTENSITIES), ";")) %>%
+        unnest(INTENSITIES) %>%
+        mutate(INTENSITIES = as.double(INTENSITIES))
+    tbl_frame_normi <- tbl_frame_i %>%
+        mutate(INTENSITIES = (INTENSITIES) / (max(tbl_frame_i$INTENSITIES)))
+    tbl_frame_mzi <- cbind(tbl_frame_mz, tbl_frame_normi) %>%
+        as_tibble() %>%
+        mutate(MZ = as.integer(MZ)) %>%
+        mutate(INTENSITIES = as.double(INTENSITIES))
+    tbl_sum_frame_mzi <- tbl_sum_mzi %>%
+        rename(sum_INTENSITIES = INTENSITIES) %>%
+        left_join(tbl_frame_mzi) %>%
+        mutate(INTENSITIES = replace_na(INTENSITIES, 0))
+    plot_frame_sum <- ggplot(tbl_sum_frame_mzi) +
+        geom_col(aes(x = MZ, y = INTENSITIES, width = 1)) +
+        geom_col(aes(x = MZ, y = -sum_INTENSITIES, width = 1)) +
+        # theme_bw() +
+        # theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
+        theme_minimal() +
+        labs(x = "*m/Z*", y = "Intensity") +
+        theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.title.x = ggtext::element_markdown()) +
+        scale_y_continuous(limits = c(-60, 60)) +
+        # scale_x_continuous(limits = c(-0, 1110)) +
+        geom_hline(yintercept = 0, size = 0.1) +
+        geom_vline(xintercept = 0, size = 0.1)
+    result_path <- "/Users/adams/Projects/300K/Results/Figures/Mirror/"
+    plot_path <- paste(result_path, pool, "_", precursor, "_", frame, ".pdf", sep = "")
+    ggsave(plot_path, plot_frame_sum, width = 22, height = 14, units = "cm")
+}
