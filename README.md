@@ -20,6 +20,14 @@ To eventually train the model, we need to map the identifications to the spectra
 | filter_and_sum.R | Filter the identifications, prepare the data to be summed on precursor-level. |
 || The output of the filtering scripts in stored in a **un-annotated/** folder. |
 | prosit_annotate.py | This script prepares the data to enable training in the prosit framework. The modified sequence is adjusted, spectra are annotated, onehot the charges, and filter based on the adromeda score. The result is written to an hdf5 file. |
-| prosit_annotate_fixed.py | This does the same thing as prosit_annotate.py but creates |
-| prosit_sum_annotate.py | Does the same as prosit_annotate
+| prosit_annotate_fixed.py | This does the same thing as prosit_annotate.py but creates a fixed ce value. |
+| master_spectrum_precursor.py | Creates consensus spectra for each precursor. |
+| prosit_sum_annotate.py | Does the same as prosit_annotate |
+
+
+| Script | Description |
+| --- | --- |
+| master_spectrum_precursor.py | Generate consensus spectra and annotate the spectra. |
+| sum_annotate.py | Seperate annotation script. |
+| sum_calibrate.py | Seperate annotation script. |
 
