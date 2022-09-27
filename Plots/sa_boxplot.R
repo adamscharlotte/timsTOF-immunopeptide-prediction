@@ -19,15 +19,10 @@ tbl_cd_sa <- fread(sa_path) %>%
     as_tibble() %>%
     mutate(PRECURSOR = as.character(PRECURSOR))
 
-colnames(tbl_cd_sa)
-tbl_cd_sa %>% select(SCORE, PREDICTED_INTENSITY, aligned_collision_energy, SEQUENCE) %>% distinct()
-
-tbl_cd_sa %>% select(SCORE, SPECTRAL_ANGLE, ORIG_COLLISION_ENERGY) %>% arrange(SPECTRAL_ANGLE) %>% print(n = 35)
-
 plot <- ggplot(tbl_cd_sa, aes(x = SEQUENCE,
     y = aligned_collision_energy)) +
     geom_boxplot() +
-    geom_jitter(shape = 16, position = position_jitter(0.2), aes(colour = RETENTION_TIME)) +
+    geom_jitter(shape = 16, position = position_jitter(0.2)) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
     labs(title = paste(pool,
