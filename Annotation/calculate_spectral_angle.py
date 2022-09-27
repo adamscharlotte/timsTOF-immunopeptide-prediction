@@ -50,8 +50,8 @@ pool = args.pool
 
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
 
-calibrated_unsummed_path = base_path + "full-truncated-qc/calibrated/" + pool + ".csv"
-calibrated_sum_path = base_path + "precursor-consensus/calibrated/" + pool + ".csv"
+calibrated_unsummed_path = base_path + "full-truncated-qc/calibrated-20ppm/" + pool + ".csv"
+calibrated_sum_path = base_path + "precursor-consensus/calibrated-20ppm/" + pool + ".csv"
 sa_path = base_path + "spectral-angle/"
 
 unsummed_df = pd.read_csv(calibrated_unsummed_path)
@@ -102,7 +102,7 @@ for charge, df_charge in grouped_charge_df:
     df_random_10['PREDICTED_INTENSITY_CAL'] = predictions_cal['Prosit_2020_intensity_hcd']['intensity'].tolist()
     df_random_10["SPECTRAL_ANGLE_CAL"] = df_random_10[['INTENSITIES','PREDICTED_INTENSITY_CAL']].apply(lambda x : get_spectral_angle(x), axis=1)
     df_random_10["SPECTRAL_ANGLE_CAL"].fillna(0, inplace=True)
-    df_random_10.to_csv(sa_path + "frames/40-ppm/" + pool + '_' + str(charge) + '.csv')
+    df_random_10.to_csv(sa_path + "frames/20-ppm/" + pool + '_' + str(charge) + '.csv')
 
 # ------------------------------------------- SUMMED --------------------------------------------
 
@@ -141,4 +141,4 @@ for charge, df_charge in grouped_charge_df:
     df_random_10['PREDICTED_INTENSITY_CAL'] = predictions_cal['Prosit_2020_intensity_hcd']['intensity'].tolist()
     df_random_10["SPECTRAL_ANGLE_CAL"] = df_random_10[['INTENSITIES','PREDICTED_INTENSITY_CAL']].apply(lambda x : get_spectral_angle(x), axis=1)
     df_random_10["SPECTRAL_ANGLE_CAL"].fillna(0, inplace=True)
-    df_random_10.to_csv(sa_path + "precursors/40-ppm/" + pool + '_' + str(charge) + '.csv')
+    df_random_10.to_csv(sa_path + "precursors/20-ppm/" + pool + '_' + str(charge) + '.csv')

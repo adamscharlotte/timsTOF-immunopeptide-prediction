@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 sum_path = base_path + "precursor-consensus/summed/" + args.pool + ".csv"
-annot_path = base_path + "precursor-consensus/annotated/" + args.pool + ".csv"
+annot_path = base_path + "precursor-consensus/annotated-20ppm/" + args.pool + ".csv"
 
 # sum_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
 # annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"

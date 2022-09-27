@@ -24,7 +24,7 @@ un_annot_path = base_path + "full-truncated-qc/un-annotated/" + args.pool + ".cs
 # un_annot_path = base_path + "full-truncated-qc/un-annotated/" + pool + ".csv"
 un_annot_df = pd.read_csv(un_annot_path)
 # file_path = base_path + "full-truncated-qc/annotated-hdf5/full-truncated-qc-un-callibrated.hdf5"
-annot_path = base_path + "full-truncated-qc/annotated/" + args.pool + ".csv"
+annot_path = base_path + "full-truncated-qc/annotated-20ppm/" + args.pool + ".csv"
 
 un_annot_df.INTENSITIES = un_annot_df.INTENSITIES.str.split(';').apply(lambda s: [float(x) for x in s])
 un_annot_df.MZ = un_annot_df.MZ.str.split(';').apply(lambda s: [float(x) for x in s])
