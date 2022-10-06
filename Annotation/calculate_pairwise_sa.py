@@ -33,12 +33,12 @@ pool = args.pool
 # pool = "TUM_aspn_36"
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-calibrated_unsummed_path = base_path + "full-truncated-qc/calibrated-20ppm/" + pool + ".csv"
-calibrated_sum_path = base_path + "precursor-consensus/calibrated-20ppm/" + pool + ".csv"
+unsummed_path = base_path + "full-truncated-qc/annotated-20ppm/" + pool + ".csv"
+sum_path = base_path + "precursor-consensus/annotated-20ppm/" + pool + ".csv"
 sa_path = base_path + "spectral-angle/"
 
-unsummed_df = pd.read_csv(calibrated_unsummed_path)
-sum_df = pd.read_csv(calibrated_sum_path)
+unsummed_df = pd.read_csv(unsummed_path)
+sum_df = pd.read_csv(sum_path)
 
 unsummed_df.INTENSITIES = unsummed_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
 unsummed_df.MZ = unsummed_df.MZ.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -55,12 +55,12 @@ unsummed_df[col_filter] = unsummed_df[unsummed_df[col_filter] >= 70][col_filter]
 filtered_unsummed_df = unsummed_df.dropna()
 
 filtered_unsummed_df['PRECURSOR_CHARGE'].value_counts()
-filtered_unsummed_df['ORIG_COLLISION_ENERGY'].min()
-filtered_unsummed_df['aligned_collision_energy'].min()
+filtered_unsummed_df['COLLISION_ENERGY'].min()
+# filtered_unsummed_df['aligned_collision_energy'].min()
 filtered_unsummed_df.columns
 grouped_charge_df = filtered_unsummed_df.groupby('PRECURSOR_CHARGE')
 
-filtered_unsummed_df[['PRECURSOR', 'aligned_collision_energy', 'ORIG_COLLISION_ENERGY']].sort_values(by = ['aligned_collision_energy'])
+# filtered_unsummed_df[['PRECURSOR', 'aligned_collision_energy', 'COLLISION_ENERGY']].sort_values(by = ['aligned_collision_energy'])
 
 for charge, df_charge in grouped_charge_df:
     # random_10_precursors = df_charge['PRECURSOR'].drop_duplicates().sample(n = 10, random_state = 43)
@@ -101,8 +101,8 @@ filtered_sum_df.columns
 
 filtered_sum_df['PRECURSOR_CHARGE'].value_counts()
 filtered_sum_df['SCORE'].unique()
-filtered_sum_df['ORIG_COLLISION_ENERGY'].min()
-filtered_sum_df['aligned_collision_energy'].min()
+filtered_sum_df['COLLISION_ENERGY'].min()
+# filtered_sum_df['aligned_collision_energy'].min()
 
 grouped_charge_df = filtered_sum_df.groupby('PRECURSOR_CHARGE')
 
@@ -132,33 +132,4 @@ for charge, df_charge in grouped_charge_df:
             df_random_10_pairs = pd.concat([df_random_10_pairs, mergdfAB], ignore_index=True)
     df_random_10_pairs["SPECTRAL_ANGLE"] = df_random_10_pairs[['INTENSITIES_A','INTENSITIES_B']].apply(lambda x : get_spectral_angle(x), axis=1)
     df_random_10_pairs["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    # df_random_10_pairs.to_csv(sa_path + "pairwise/precursors/20-ppm/" + pool + '_' + str(charge) + '.csv')
     df_random_10_pairs.to_csv(sa_path + "pairwise/precursors/all/" + pool + '_' + str(charge) + '.csv')
-
-
-# ------------------------------------- FIGURE OUT HOW TO --------------------------------------
-
-# df = pd.DataFrame({'year': ['2001', '2004', '2005', '2006', '2007', '2008', '2009',
-#                              '2003', '2004', '2005', '2006', '2007', '2008', '2009',
-#                             '2003', '2004', '2005', '2006', '2007', '2008', '2009'],
-#                    'id': ['1', '1', '1', '1', '1', '1', '1', 
-#                           '2', '2', '2', '2', '2', '2', '2',
-#                          '5', '5', '5','5', '5', '5', '5'],
-#                    'money': ['15', '15', '15', '21', '21', '21', '21', 
-#                              '17', '17', '17', '20', '17', '17', '17',
-#                             '25', '30', '22', '25', '8', '7', '12']}).astype(int)
-
-# grouped_df = df.groupby('id')
-# for id, df_id in grouped_df:
-#     comb_list = list(combinations(df_id.year, 2))
-#     combdf = pd.DataFrame({'combination':comb_list})
-#     combdf['combination'] = combdf['combination'].astype(str)
-#     combdf.combination = combdf.combination.str.strip(")(").str.split(", ").apply(lambda s: [int(x) for x in s])
-#     combdf[['A','B']] = pd.DataFrame(combdf.combination.tolist(), index= combdf.index)
-#     df_id
-#     mergdfA = pd.merge(combdf,df_id[['year','money']],left_on='A', right_on='year', how='left')
-#     mergdfA = mergdfA.drop(columns=['year'])
-#     mergdfA = mergdfA.rename(columns={'money': 'money_A'})
-#     mergdfAB = pd.merge(mergdfA,df_id[['year','money']],left_on='B', right_on='year', how='left')
-#     mergdfAB = mergdfAB.drop(columns=['year'])
-#     mergdfAB = mergdfAB.rename(columns={'money': 'money_B'})
