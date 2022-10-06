@@ -8,7 +8,6 @@ from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
 from fundamentals.annotation.annotation import annotate_spectra
 from fundamentals.mod_string import maxquant_to_internal, internal_without_mods
-import h5py
 import argparse, pathlib
 from fundamentals.mod_string import parse_modstrings, maxquant_to_internal
 from fundamentals.constants import ALPHABET
@@ -20,18 +19,14 @@ parser.add_argument("pool", type=str)					# Filename
 args = parser.parse_args()
 
 # pool = "TUM_HLA_16"
+pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-un_annot_path = base_path + "precursor-consensus/un-annotated/" + args.pool + ".csv"
-sum_path = base_path + "precursor-consensus/summed/" + args.pool + ".csv"
-annot_path = base_path + "precursor-consensus/annotated/" + args.pool + ".csv"
-
-# un_annot_path = base_path + "precursor-consensus/un-annotated/" + pool + ".csv"
-# sum_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
-# annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
+un_annot_path = base_path + "precursor-consensus/un-annotated/" + pool + ".csv"
+sum_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
+annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
 
 un_annot_df = pd.read_csv(un_annot_path)
-file_path = base_path + "precursor-consensus/annotated/full-truncated-qc-un-callibrated-precursor-consensus.hdf5"
 un_annot_df["combined_INTENSITIES"]
 
 un_annot_df.combined_INTENSITIES = un_annot_df.combined_INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -40,13 +35,12 @@ un_annot_df.combined_MZ = un_annot_df.combined_MZ.str.split(";").apply(lambda s:
 def binning(inp, ignoreCharges):
     ms = MasterSpectrum()
     ms.load_from_tims(inp, ignoreCharges)
-    ms.export_to_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/15092022.csv")
-    comb_ms = pd.read_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/15092022.csv")
+    ms.export_to_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/06102022.csv")
+    comb_ms = pd.read_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/06102022.csv")
     precursor = inp["PRECURSOR"]
     comb_ms["PRECURSOR"] = precursor
     comb_ms = comb_ms.drop(columns=["counts", "left border", "right border", "start_mz", "ms1_charge", "rel_intensity_ratio", "counts_ratio"])
     return comb_ms
-
 bin_result_df = pd.DataFrame()
 for index, line in un_annot_df.iterrows():
     bin_result = binning(line, True)
