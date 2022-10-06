@@ -1,5 +1,3 @@
-# ssh cadams@10.152.135.57
-# /home/cadams/anaconda3/envs/prosit-annotate/bin/python3
 # /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3
 
 from math import comb
@@ -8,18 +6,7 @@ import numpy as np
 import os
 from itertools import combinations
 
-# from sqlalchemy import true
-
-# from fundamentals import constants
-# from fundamentals.fragments import initialize_peaks
-# from fundamentals.annotation.annotation import annotate_spectra
-# from fundamentals.mod_string import maxquant_to_internal, internal_without_mods
-# import h5py
 import argparse, pathlib
-# from fundamentals.mod_string import parse_modstrings, maxquant_to_internal
-# from fundamentals.constants import ALPHABET
-# import prosit_grpc
-# from prosit_grpc.predictPROSIT import PROSITpredictor
 
 def get_spectral_angle(intensities):
     pred= np.array(intensities[0])
@@ -76,9 +63,10 @@ grouped_charge_df = filtered_unsummed_df.groupby('PRECURSOR_CHARGE')
 filtered_unsummed_df[['PRECURSOR', 'aligned_collision_energy', 'ORIG_COLLISION_ENERGY']].sort_values(by = ['aligned_collision_energy'])
 
 for charge, df_charge in grouped_charge_df:
-    random_10_precursors = df_charge['PRECURSOR'].drop_duplicates().sample(n = 10, random_state = 43)
-    df_random_10 = df_charge[df_charge['PRECURSOR'].isin(random_10_precursors)]
-    grouped_df_random_10 = df_random_10.groupby('PRECURSOR')
+    # random_10_precursors = df_charge['PRECURSOR'].drop_duplicates().sample(n = 10, random_state = 43)
+    # df_random_10 = df_charge[df_charge['PRECURSOR'].isin(random_10_precursors)]
+    # grouped_df_random_10 = df_random_10.groupby('PRECURSOR')
+    grouped_df_random_10 = df_charge.groupby('PRECURSOR')
     df_random_10_pairs = pd.DataFrame({'combination' : [], 'A' : '', 'B': '', 'INTENSITIES_A' : [], 'INTENSITIES_B' : [], 'PRECURSOR': ''})
     for group, df_group in grouped_df_random_10:
         if len(df_group) == 1:
@@ -89,18 +77,19 @@ for charge, df_charge in grouped_charge_df:
             combdf['combination'] = combdf['combination'].astype(str)
             combdf.combination = combdf.combination.str.strip(")(").str.split(", ").apply(lambda s: [int(x) for x in s])
             combdf[['A','B']] = pd.DataFrame(combdf.combination.tolist(), index= combdf.index)
-            mergdfA = pd.merge(combdf,df_random_10[['FRAME','INTENSITIES']],left_on='A', right_on='FRAME', how='left')
+            # mergdfA = pd.merge(combdf,df_random_10[['FRAME','INTENSITIES']],left_on='A', right_on='FRAME', how='left')
+            mergdfA = pd.merge(combdf,df_group[['FRAME','INTENSITIES']],left_on='A', right_on='FRAME', how='left')
             mergdfA = mergdfA.drop(columns=['FRAME'])
             mergdfA = mergdfA.rename(columns={'INTENSITIES': 'INTENSITIES_A'})
-            mergdfAB = pd.merge(mergdfA,df_random_10[['FRAME','INTENSITIES', 'PRECURSOR']],left_on='B', right_on='FRAME', how='left')
+            # mergdfAB = pd.merge(mergdfA,df_random_10[['FRAME','INTENSITIES', 'PRECURSOR']],left_on='B', right_on='FRAME', how='left')
+            mergdfAB = pd.merge(mergdfA,df_group[['FRAME','INTENSITIES', 'PRECURSOR']],left_on='B', right_on='FRAME', how='left')
             mergdfAB = mergdfAB.drop(columns=['FRAME'])
             mergdfAB = mergdfAB.rename(columns={'INTENSITIES': 'INTENSITIES_B'})
             df_random_10_pairs = pd.concat([df_random_10_pairs, mergdfAB], ignore_index=True)
     df_random_10_pairs["SPECTRAL_ANGLE"] = df_random_10_pairs[['INTENSITIES_A','INTENSITIES_B']].apply(lambda x : get_spectral_angle(x), axis=1)
     df_random_10_pairs["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    df_random_10_pairs.to_csv(sa_path + "pairwise/frames/20-ppm/" + pool + '_' + str(charge) + '.csv')
-
-df_random_10_pairs["SPECTRAL_ANGLE"] = df_random_10_pairs[['INTENSITIES_A','INTENSITIES_B']].apply(lambda x : get_spectral_angle(x), axis=1)
+    # df_random_10_pairs.to_csv(sa_path + "pairwise/frames/20-ppm/" + pool + '_' + str(charge) + '.csv')
+    df_random_10_pairs.to_csv(sa_path + "pairwise/frames/all/" + pool + '_' + str(charge) + '.csv')
 
 # ------------------------------------------- SUMMED --------------------------------------------
 
@@ -118,9 +107,10 @@ filtered_sum_df['aligned_collision_energy'].min()
 grouped_charge_df = filtered_sum_df.groupby('PRECURSOR_CHARGE')
 
 for charge, df_charge in grouped_charge_df:
-    random_10_precursors = df_charge['SEQUENCE'].drop_duplicates().sample(n = 10, random_state = 43)
-    df_random_10 = df_charge[df_charge['SEQUENCE'].isin(random_10_precursors)]
-    grouped_df_random_10 = df_random_10.groupby('SEQUENCE')
+    # random_10_precursors = df_charge['SEQUENCE'].drop_duplicates().sample(n = 10, random_state = 43)
+    # df_random_10 = df_charge[df_charge['SEQUENCE'].isin(random_10_precursors)]
+    # grouped_df_random_10 = df_random_10.groupby('SEQUENCE')
+    grouped_df_random_10 = df_charge.groupby('SEQUENCE')
     df_random_10_pairs = pd.DataFrame({'combination' : [], 'A' : '', 'B': '', 'INTENSITIES_A' : [], 'INTENSITIES_B' : [], 'SEQUENCE': ''})
     for group, df_group in grouped_df_random_10:
         if len(df_group) == 1:
@@ -131,16 +121,19 @@ for charge, df_charge in grouped_charge_df:
             combdf['combination'] = combdf['combination'].astype(str)
             combdf.combination = combdf.combination.str.strip(")(").str.split(", ").apply(lambda s: [int(x) for x in s])
             combdf[['A','B']] = pd.DataFrame(combdf.combination.tolist(), index= combdf.index)
-            mergdfA = pd.merge(combdf,df_random_10[['PRECURSOR','INTENSITIES']],left_on='A', right_on='PRECURSOR', how='left')
+            # mergdfA = pd.merge(combdf,df_random_10[['PRECURSOR','INTENSITIES']],left_on='A', right_on='PRECURSOR', how='left')
+            mergdfA = pd.merge(combdf,df_charge[['PRECURSOR','INTENSITIES']],left_on='A', right_on='PRECURSOR', how='left')
             mergdfA = mergdfA.drop(columns=['PRECURSOR'])
             mergdfA = mergdfA.rename(columns={'INTENSITIES': 'INTENSITIES_A'})
-            mergdfAB = pd.merge(mergdfA,df_random_10[['PRECURSOR','INTENSITIES', 'SEQUENCE']],left_on='B', right_on='PRECURSOR', how='left')
+            # mergdfAB = pd.merge(mergdfA,df_random_10[['PRECURSOR','INTENSITIES', 'SEQUENCE']],left_on='B', right_on='PRECURSOR', how='left')
+            mergdfAB = pd.merge(mergdfA,df_charge[['PRECURSOR','INTENSITIES', 'SEQUENCE']],left_on='B', right_on='PRECURSOR', how='left')
             mergdfAB = mergdfAB.drop(columns=['PRECURSOR'])
             mergdfAB = mergdfAB.rename(columns={'INTENSITIES': 'INTENSITIES_B'})
             df_random_10_pairs = pd.concat([df_random_10_pairs, mergdfAB], ignore_index=True)
     df_random_10_pairs["SPECTRAL_ANGLE"] = df_random_10_pairs[['INTENSITIES_A','INTENSITIES_B']].apply(lambda x : get_spectral_angle(x), axis=1)
     df_random_10_pairs["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    df_random_10_pairs.to_csv(sa_path + "pairwise/precursors/20-ppm/" + pool + '_' + str(charge) + '.csv')
+    # df_random_10_pairs.to_csv(sa_path + "pairwise/precursors/20-ppm/" + pool + '_' + str(charge) + '.csv')
+    df_random_10_pairs.to_csv(sa_path + "pairwise/precursors/all/" + pool + '_' + str(charge) + '.csv')
 
 
 # ------------------------------------- FIGURE OUT HOW TO --------------------------------------
