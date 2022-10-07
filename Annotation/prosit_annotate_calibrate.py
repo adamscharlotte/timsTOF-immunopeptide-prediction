@@ -1,8 +1,12 @@
+# ssh cadams@10.152.135.57
 # /home/cadams/anaconda3/envs/prosit-annotate/bin/python3
 
+from pickle import TRUE
 import pandas as pd
 import numpy as np
 import os
+
+from sqlalchemy import true
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
@@ -15,13 +19,18 @@ from fundamentals.constants import ALPHABET
 import prosit_grpc
 from prosit_grpc.predictPROSIT import PROSITpredictor
 
+def int_to_onehot(charge):
+    precursor_charge = np.full((6), False)
+    precursor_charge[charge-1] = True
+    return precursor_charge
+
 def get_spectral_angle(intensities):
     pred= np.array(intensities[0])
     true = np.array(intensities[1])
     epsilon = 1e-7
-    #list_1 = np.argwhere(true>0)
+    list_1 = np.argwhere(true>0)
     list_2 = np.argwhere(pred>0)
-    indices = np.union1d(list_2,list_2)
+    indices = np.union1d(list_1,list_2)
     pred_masked = pred[indices]
     true_masked = true[indices]
     true_masked += epsilon
@@ -32,45 +41,17 @@ def get_spectral_angle(intensities):
     arccos = np.arccos(product)
     return 1-2*arccos/np.pi
 
-# intensities_org = [1, 0, 6, 8, 1, 0]
-# intensities_pred = [2, 0, 5, 7, 1, 1]
-
-# get_spectral_angle([intensities_org, intensities_pred])
-
-# intens = [intensities_org, intensities_pred]
-# pred= intens[0]
-# true = intens[1]
-
-# list_2 = np.argwhere(pred[0]>0)
-
-# def get_spectral_angle(intensities, predintensities):
-#     pred= predintensities
-#     true = intensities
-#     epsilon = 1e-7
-#     #list_1 = np.argwhere(true>0)
-#     list_2 = np.argwhere(pred>0)
-#     indices = np.union1d(list_2,list_2)
-#     pred_masked = pred[indices]
-#     true_masked = true[indices]
-#     true_masked += epsilon
-#     pred_masked += epsilon
-#     true_norm = true_masked*(1/np.sqrt(np.sum(np.square(true_masked), axis=0)))
-#     pred_norm = pred_masked*(1/np.sqrt(np.sum(np.square(pred_masked), axis=0)))
-#     product = np.sum(true_norm*pred_norm, axis=0)
-#     arccos = np.arccos(product)
-#     return 1-2*arccos/np.pi
-
-# get_spectral_angle(intensities, intensities_pred)
-
 parser = argparse.ArgumentParser()
 parser.add_argument('pool', type=str)					# Filename
 args = parser.parse_args()
 
-# pool = "TUM_aspn_2"
+# pool = "TUM_HLA2_7"
 
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
 un_annot_path = base_path + "full-truncated-qc/un-annotated-ce/" + args.pool + ".csv"
 # un_annot_path = base_path + "full-truncated-qc/un-annotated-ce/" + pool + ".csv"
+ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + args.pool 
+# ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + pool
 
 un_annot_df = pd.read_csv(un_annot_path)
 file_path = base_path + "full-truncated-qc/annotated/full-truncated-qc-calibrated.hdf5"
@@ -85,6 +66,7 @@ un_annot_df["REVERSE"].replace("+", True, inplace=True)
 un_annot_df["MODIFIED_SEQUENCE"] = maxquant_to_internal(un_annot_df["MODIFIED_SEQUENCE"].to_numpy())
 un_annot_df["SEQUENCE"] = internal_without_mods(un_annot_df["MODIFIED_SEQUENCE"])
 un_annot_df['PEPTIDE_LENGTH'] = un_annot_df["SEQUENCE"].apply(lambda x: len(x))
+un_annot_df["PRECURSOR_CHARGE_ONEHOT"] = un_annot_df.apply(lambda row: int_to_onehot(row.PRECURSOR_CHARGE), axis = 1)
 
 generator_sequence_numeric = parse_modstrings(list(un_annot_df['MODIFIED_SEQUENCE'].values), ALPHABET, translate=True)
 enum_gen_seq_num = enumerate(generator_sequence_numeric)
@@ -110,63 +92,67 @@ col_filter = ['SCORE']
 full_df[col_filter] = full_df[un_annot_df[col_filter] >= 70][col_filter]
 filtered_annot_df = full_df.dropna()
 
-# list(filtered_annot_df.columns)
-
-def int_to_onehot(charge):
-    precursor_charge = np.full((6), False)
-    precursor_charge[charge-1] = True
-    return precursor_charge
-
-filtered_annot_df["PRECURSOR_CHARGE_ONEHOT"] = filtered_annot_df.apply(lambda row: int_to_onehot(row.PRECURSOR_CHARGE), axis = 1)
-
 # -----------------------------------------------------------------------------
-top_300_df = filtered_annot_df.sort_values(['SCORE'], ascending=False).head(300)
+
+charges = filtered_annot_df['PRECURSOR_CHARGE'].unique()
+number_of_charges = charges.__len__()
+
+filtered_annot_df['PRECURSOR_CHARGE'].value_counts()
+filtered_annot_df['SCORE'].unique()
+filtered_annot_df['ORIG_COLLISION_ENERGY'].min()
+
+grouped_charge_df = filtered_annot_df.groupby('PRECURSOR_CHARGE')
 
 predictor = PROSITpredictor(server="10.152.135.57:8500")
+CE_RANGE = range(5, 45)
+appended_data = []
 
-CE_RANGE = range(18, 50)
-nrow = len(top_300_df)
-top_300_df = pd.concat([top_300_df for _ in CE_RANGE], axis=0)
-top_300_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
-top_300_df.reset_index(inplace=True)
+for charge, df_charge in grouped_charge_df:
+    top_100_df = df_charge.sort_values(['SCORE'], ascending=False).head(100)
+    nrow = len(top_100_df)
+    top_100_df = pd.concat([top_100_df for _ in CE_RANGE], axis=0)
+    top_100_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
+    top_100_df.reset_index(inplace=True)
+    
+    predictions = predictor.predict(sequences=top_100_df['MODIFIED_SEQUENCE'].values.tolist(),
+                                    charges=top_100_df["PRECURSOR_CHARGE"].values.tolist(),
+                                    collision_energies=top_100_df["COLLISION_ENERGY"].values/100.0,
+                                                        models=['Prosit_2020_intensity_hcd'],
+                                                        disable_progress_bar=True)
+    
+    top_100_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
+    top_100_df["SPECTRAL_ANGLE"] = top_100_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
+    top_100_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+    top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
+    groups = top_100_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY"])["SPECTRAL_ANGLE"].mean()
+    groups_2 = groups.reset_index()
+    ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
+    calib_group = groups_2[ids]
+    calib_group['delta_collision_energy'] = calib_group['COLLISION_ENERGY'] - calib_group['ORIG_COLLISION_ENERGY']
+    ce_alignment = calib_group['delta_collision_energy']
+    best_ce = ce_alignment.median()
+    best_ce
+    df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + best_ce
+    appended_data.append(df_charge)
 
-predictions = predictor.predict(sequences=top_300_df['MODIFIED_SEQUENCE'].values.tolist(),
-                                charges=top_300_df["PRECURSOR_CHARGE"].values.tolist(),
-                                collision_energies=top_300_df["COLLISION_ENERGY"].values/100.0,
-                                                    models=['Prosit_2020_intensity_hcd'],
-                                                    disable_progress_bar=True)
-
-top_300_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
-
-# predicted_top_300_df = pd.concat([top_300_df, pd.DataFrame(predictions).T], axis=1)
-top_300_df['INTENSITIES']
-top_300_df["SPECTRAL_ANGLE"] = top_300_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
-
-groups = top_300_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY"])["SPECTRAL_ANGLE"].mean()
-groups_2 = groups.reset_index()
-ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
-calib_group = groups_2[ids]
-calib_group['delta_collision_energy'] = calib_group['COLLISION_ENERGY'] - calib_group['ORIG_COLLISION_ENERGY']
-ce_alignment = calib_group['delta_collision_energy']
-best_ce = ce_alignment.median()
+calibrated_annot_df = pd.concat(appended_data)
 
 # -----------------------------------------------------------------------------
 
-filtered_annot_df['aligned_collision_energy'] = filtered_annot_df['ORIG_COLLISION_ENERGY'] + best_ce
-filtered_annot_df['aligned_collision_energy'] = filtered_annot_df['aligned_collision_energy'].apply(lambda x : float(round(x)))
+calibrated_annot_df['aligned_collision_energy'] = calibrated_annot_df['aligned_collision_energy'].apply(lambda x : float(round(x)))
 
-collision_energies = np.asarray(filtered_annot_df.ORIG_COLLISION_ENERGY.values)
-adjusted_collision_energies = np.asarray(filtered_annot_df.aligned_collision_energy.values/100.0)
-collision_energies_normalized = np.asarray(filtered_annot_df.ORIG_COLLISION_ENERGY.values/100.0)
-intensities = np.asarray(filtered_annot_df.INTENSITIES.values.tolist())
-masses = np.asarray(filtered_annot_df.MZ.values.tolist())
-methods = np.asarray(filtered_annot_df.FRAGMENTATION.values,dtype ='S3')
-precursor_charges = np.asarray(filtered_annot_df.PRECURSOR_CHARGE_ONEHOT.values.tolist())
-raw_files = np.asarray(filtered_annot_df.RAW_FILE.values,dtype='S120')
-scan_numbers = np.asarray(filtered_annot_df.SCAN_NUMBER.values)
-scores = np.asarray(filtered_annot_df.SCORE.values)
-sequence_integers = np.asarray(filtered_annot_df.SEQUENCE_INT.values.tolist())
-retention_time = np.asarray(filtered_annot_df.RETENTION_TIME.values)
+collision_energies = np.asarray(calibrated_annot_df.ORIG_COLLISION_ENERGY.values)
+adjusted_collision_energies = np.asarray(calibrated_annot_df.aligned_collision_energy.values/100.0)
+collision_energies_normalized = np.asarray(calibrated_annot_df.ORIG_COLLISION_ENERGY.values/100.0)
+intensities = np.asarray(calibrated_annot_df.INTENSITIES.values.tolist())
+masses = np.asarray(calibrated_annot_df.MZ.values.tolist())
+methods = np.asarray(calibrated_annot_df.FRAGMENTATION.values,dtype ='S3')
+precursor_charges = np.asarray(calibrated_annot_df.PRECURSOR_CHARGE_ONEHOT.values.tolist())
+raw_files = np.asarray(calibrated_annot_df.RAW_FILE.values,dtype='S120')
+scan_numbers = np.asarray(calibrated_annot_df.SCAN_NUMBER.values)
+scores = np.asarray(calibrated_annot_df.SCORE.values)
+sequence_integers = np.asarray(calibrated_annot_df.SEQUENCE_INT.values.tolist())
+retention_time = np.asarray(calibrated_annot_df.RETENTION_TIME.values)
 
 if os.path.exists(file_path):
     with h5py.File(file_path, 'a') as hf:
@@ -220,13 +206,3 @@ else:
     h5f.create_dataset('sequence_integer', data=sequence_integers, compression="gzip", chunks=True, maxshape=(None,32))
     h5f.create_dataset('retention_time', data=retention_time, compression="gzip", chunks=True, maxshape=(None,))
     h5f.close()
-
-# -----------------------------------------------------------------------------
-
-# df = pd.DataFrame(data=[[21, 1],[32, -4],[-4, 14],[3, 17],[-7,70]], columns=['a', 'b'])
-# df
-
-# cols = ['b']
-# df[cols] = df[df[cols] > 2][cols]
-# df.dropna()
-
