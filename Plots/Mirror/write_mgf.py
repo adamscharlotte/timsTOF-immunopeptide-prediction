@@ -18,8 +18,8 @@ csv_path = args.csv_path
 mgf_path = args.mgf_path
 charge_name = args.charge_name
 
-# base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-# file_name = "TUM_HLA2_88"
+base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
+file_name = "TUM_HLA2_88"
 # csv_path = base_path + "full-truncated-qc/un-annotated/" + file_name + ".csv"
 # mgf_path = base_path + "full-truncated-qc/un-annotated-mgf/" + file_name + ".mgf"
 # csv_path = base_path + "full-truncated-qc/annotated-20ppm/" + file_name + ".csv"
@@ -52,25 +52,27 @@ for i in range (len(csv_df)):
 mgf.write(spectra = spectra_list, output = mgf_path)
 
 # ----------------------------------- PRECURSOR -----------------------------------
-# csv_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
+# csv_path = base_path + "precursor-consensus/summed/" + file_name + ".csv"
 # mgf_path = base_path + "precursor-consensus/un-annotated-mgf/" + pool + ".mgf"
-# csv_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
-# mgf_path = base_path + "precursor-consensus/annotated-mgf/" + pool + ".mgf"
+csv_path = base_path + "precursor-consensus/annotated-20ppm/" + file_name + ".csv"
+mgf_path = base_path + "precursor-consensus/annotated-20ppm-mgf/" + file_name + ".mgf"
 
 csv_df = pd.read_csv(csv_path)
 
-csv_df["INTENSITIES"] = csv_df.combined_INTENSITIES.str.split(';').apply(lambda s: [int(x) for x in s])
-csv_df["MZ"] = csv_df.combined_MZ.str.split(';').apply(lambda s: [float(x) for x in s])
+# csv_df["INTENSITIES"] = csv_df.combined_INTENSITIES.str.split(';').apply(lambda s: [int(x) for x in s])
+# csv_df["MZ"] = csv_df.combined_MZ.str.split(';').apply(lambda s: [float(x) for x in s])
 
 csv_df.INTENSITIES = csv_df.INTENSITIES.str.split(';').apply(lambda s: [float(x) for x in s])
 csv_df.MZ = csv_df.MZ.str.split(';').apply(lambda s: [float(x) for x in s])
+
+# csv_df[csv_df["PRECURSOR"] == 9998].MZ.values
 
 spectra_list = []
 for i in range (len(csv_df)):
     mz_list = csv_df.iloc[i]["MZ"]
     mz_array = np.array(mz_list)
     intensity_list = csv_df.iloc[i]["INTENSITIES"]
-    intensity_array = np.array(intensity_list).astype(int)
+    intensity_array = np.array(intensity_list).astype(float)
     precursor = csv_df.iloc[i]["PRECURSOR"].astype(str)
     title = precursor
     mass = csv_df.iloc[i]["MASS"]
