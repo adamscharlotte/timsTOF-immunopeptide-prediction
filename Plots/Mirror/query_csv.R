@@ -1,101 +1,64 @@
 library(tidyverse)
 library(data.table)
 
-base_path <- "/Users/adams/Projects/300K/2022-library-run/"
-meta_path <- paste(base_path, "Metadata/full-meta-map.txt", sep = "")
-sa_path <- paste(base_path, "Annotation/spectral-angle/frames", sep = "")
+base_path <- "/Users/adams/Projects/300K/2022-library-run/Annotation/"
+
+# ---------------------------------- FRAMES -----------------------------------
+sa_path <- paste(base_path, "spectral-angle/pairwise/frames/all", sep = "")
+psm_path <- paste(base_path, "full-truncated-qc/annotated-20ppm", sep = "")
 
 setwd(sa_path)
 files <- dir(pattern = "*.csv")
-df_sa <- files %>%
-    map(read_csv) %>%        # read in all the files individually, using
-                            # the function read_csv() from the readr package
-    reduce(rbind)           # reduce with rbind into one dataframe
+df_sa <- map_df(files, ~read.csv(.x) %>% mutate(pool_name = basename(.x)))
 
-tbl_meta <- fread(meta_path) %>%
+setwd(psm_path)
+files_psm <- paste(substring(files, 1, nchar(files) - 6), ".csv", sep = "")
+df_psm <- map_df(files_psm, ~read.csv(.x) %>% mutate(pool_name = basename(.x)))
+tbl_psm <- df_psm %>%
     as_tibble() %>%
-    select(pool_name, folder_names) %>%
-    mutate(folder_names = substring(folder_names, 1, nchar(folder_names) - 2))
+    mutate(pool_name = substring(pool_name, 1, nchar(pool_name) - 4)) %>%
+    select(pool_name, PRECURSOR, PRECURSOR_CHARGE)
 
-tbl_sa <- merge(df_sa, tbl_meta, by.x = "RAW_FILE", by.y = "folder_names") %>%
-    as_tibble()
-tbl_sa %>% group_by(SEQUENCE) %>% do(data.frame(t(combn(.$PRECURSOR, 2))))
+tbl_sa <- df_sa %>%
+    mutate(pool_name = substring(pool_name, 1, nchar(pool_name) - 6)) %>%
+    merge(tbl_psm, by = c("pool_name", "PRECURSOR")) %>%
+    as_tibble() %>%
+    distinct() %>%
+    select(pool_name, A, B, PRECURSOR_CHARGE, PRECURSOR, SPECTRAL_ANGLE)
 
-fruits <- tibble(
-  type   = c("apple", "orange", "apple", "orange", "orange", "orange"),
-  year   = c(2010, 2010, 2012, 2010, 2011, 2012),
-  size  =  factor(
-    c("XS", "S",  "M", "S", "S", "M"),
-    levels = c("XS", "S", "M", "L")
-  ),
-  weights = rnorm(6, as.numeric(size) + 2)
-)
+query_path <- "/Users/adams/Projects/300K/Results/Figures/Mirror/query/"
+save_path <- paste(query_path, "frames.csv")
+write_csv(tbl_sa, save_path)
 
-install.packages("tictoc")
-library(tictoc)
-fruits %>% group_by(type) %>% expand(year, full_seq(year, 1)) %>% ungroup() #%>% colnames()
+# --------------------------------- PRECURSOR ---------------------------------
+sa_path <- paste(base_path, "spectral-angle/pairwise/precursors/all", sep = "")
+psm_path <- paste(base_path, "precursor-consensus/annotated-20ppm", sep = "")
 
-tic("group fast")
+setwd(sa_path)
+df_sa <- map_df(files, ~read.csv(.x) %>% mutate(pool_name = basename(.x)))
+
+setwd(psm_path)
+files_psm <- paste(substring(files, 1, nchar(files) - 6), ".csv", sep = "")
+df_psm <- map_df(files_psm, ~read.csv(.x) %>% mutate(pool_name = basename(.x)))
+tbl_psm <- df_psm %>%
+    as_tibble() %>%
+    mutate(pool_name = substring(pool_name, 1, nchar(pool_name) - 4)) %>%
+    select(pool_name, PRECURSOR, PRECURSOR_CHARGE)
+
 tbl_sa %>%
-    group_by(SEQUENCE) %>%
-    summarise(PRECURSOR = combn(PRECURSOR, 2, simplify = FALSE)) %>%
-    unnest_wider(PRECURSOR, names_sep = "_")
-toc()
+    filter(pool_name == "TUM_HLA2_88") %>%
+    filter(PRECURSOR_CHARGE == 1) %>%
+    filter(SEQUENCE == "LDGFSVK")
+    count(PRECURSOR_CHARGE)
+tbl_sa <- df_sa %>%
+    mutate(pool_name = substring(pool_name, 1, nchar(pool_name) - 6)) %>%
+    mutate(PRECURSOR = A) %>%
+    merge(tbl_psm, by = c("pool_name", "PRECURSOR")) %>%
+    as_tibble() %>%
+    distinct() %>%
+    select(pool_name, A, B, PRECURSOR_CHARGE, PRECURSOR, SEQUENCE,
+        SPECTRAL_ANGLE)
 
-tic("group faster")
-tbl_sa %>% group_by(SEQUENCE) %>% do(data.frame(t(combn(.$PRECURSOR, 2))))
-toc()
-
-tic("group even faster")
-setDT(tbl_sa)[, {i1 <-  combn(PRECURSOR, 2)
-                   list(i1[1,], i1[2,]) }, by =  SEQUENCE]
-toc()
-
-tic("group even even faster")
-setDT(tbl_sa)[, transpose(combn(PRECURSOR, 2, FUN = list)), by = SEQUENCE]
-toc()
-
-tic("group fastest")
-lst <- by(tbl_sa$PRECURSOR, tbl_sa$SEQUENCE, FUN = combn, m= 2)
-data.frame(SEQUENCE = rep(unique(as.character(tbl_sa$SEQUENCE)),
-                    sapply(lst, ncol)), t(do.call(cbind, lst)))
-toc()
-
-
-sample <- data.frame(
-  group=c("a","a","a","a","b","b","b"),
-  number=c(1,2,3,2,4,5,3)
-) %>% as_tibble()
-
-tic("group fast")
-sample %>%
-    group_by(group) %>%
-    summarise(number = combn(number, 2, simplify = FALSE)) %>%
-    unnest_wider(number, names_sep = "_")
-toc()
-
-tic("group faster")
-sample %>% group_by(group) %>% do(data.frame(t(combn(.$number, 2))))
-toc()
-
-tic("group even faster")
-setDT(sample)[, {i1 <-  combn(number, 2)
-                   list(i1[1,], i1[2,]) }, by =  group]
-toc()
-
-tic("group even even faster")
-setDT(sample)[, transpose(combn(number, 2, FUN = list)), by = group]
-toc()
-
-tic("group fastest")
-lst <- by(sample$number, sample$group, FUN = combn, m= 2)
-data.frame(group = rep(unique(as.character(sample$group)), 
-                    sapply(lst, ncol)), t(do.call(cbind, lst)))
-toc()
-
-
-
-    select(pool_name, PRECURSOR, )
-
-colnames(tbl_sa)
-query_path <- "/Users/adams/Projects/300K/Results/Figures/Mirror/"
+query_path <- "/Users/adams/Projects/300K/Results/Figures/Mirror/query/"
+save_path <- paste(query_path, "precursors.csv")
+write_csv(tbl_sa, save_path)
