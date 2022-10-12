@@ -68,8 +68,12 @@ do
     time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/frame_annotate.py "${array[0]}"
 done
 
-name_file=all-pool-names.txt
+
+grep -vxFf annot_done.txt all-pool-names.txt > annot_queue.txt
+
+# name_file=all-pool-names.txt
 # name_file=sample-pool-names.txt
+name_file=annot_queue
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
@@ -77,11 +81,14 @@ do
     time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/sum_annotate.py "${array[0]}"
 done
 
+/Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/sum_annotate.py "TUM_HLA2_154"
+
 # ---------------------------------------- CALIBRATE ----------------------------------------
 ssh cadams@10.152.135.57
 
 scp Annotation/frame_calibrate.py cadams@10.152.135.57:/home/cadams
 scp Annotation/sum_calibrate.py cadams@10.152.135.57:/home/cadams
+scp annot_queue.txt cadams@10.152.135.57:/home/cadams
 
 name_file=sample-pool-names.txt
 lines=`tail -n+1 $name_file`
@@ -92,7 +99,8 @@ do
     printf '%d %s' "$i" "${array[i]}"
 done
 
-name_file=all-pool-names.txt
+# name_file=all-pool-names.txt
+name_file=annot_queue.txt
 # name_file=sample-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
@@ -112,6 +120,15 @@ do
     time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/calibrated_hdf5.py "${array[0]}"
 done
 
+# --------------------------------------- SHUFFLE SPLIT ----------------------------------------
+ssh cadams@10.152.135.57
+cd /home/cadams/ozapft/scripts
+
+# Adjust the name of the hdf5 file
+view shuffle.sh
+
+# Run script
+bash shuffle.sh
 
 # ---------------------------------------- CALCULATE SA ----------------------------------------
 scp Annotation/calculate_spectral_angle.py cadams@10.152.135.57:/home/cadams
@@ -150,6 +167,14 @@ for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
     Rscript Plots/sa_boxplot_pairwise.R "${array[0]}"
+done
+
+name_file=sample_charge.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    Rscript Plots/sa_boxplot_compare.R "${array[0]}"
 done
 
 # ----------------------------------------- CE PLOTS ----------------------------------------
