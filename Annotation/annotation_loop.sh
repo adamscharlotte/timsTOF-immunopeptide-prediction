@@ -216,4 +216,12 @@ scp Annotation/bruker_map.R cadams@10.152.135.57:/home/cadams
 
 Rscript bruker_map.R "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/190926_TIMSiDE_LCMS02_sample-3_90min_R2_Slot1-30_01_3622.d" "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/combined/txt" "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/precursor-mapped/S3_R2.csv"
 
+# ----------------------------------- SCAN-LEVEL CONSENSUS ----------------------------------
 
+name_file=all-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time Rscript Annotation/scan_filter_sum.R "${array[0]}"
+done
