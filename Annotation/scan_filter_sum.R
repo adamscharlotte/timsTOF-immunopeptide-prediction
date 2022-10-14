@@ -51,13 +51,14 @@ tbl_annotation <- tbl_mapped_precursor %>%
     rename_with(toupper) %>%
     # Group by scan numbers instead of precursor
     group_by(SCAN_NUMBER) %>%
+    mutate(mean_CE = mean(COLLISION_ENERGY)) %>%
     mutate(combined_INTENSITIES = paste0(INTENSITIES, collapse = ";")) %>%
     mutate(combined_MZ = paste0(MZ, collapse = ";")) %>%
     mutate(RETENTION_TIME = median(RETENTION_TIME)) %>%
     ungroup() %>%
     select(RAW_FILE, SCAN_NUMBER, MODIFIED_SEQUENCE, CHARGE, FRAGMENTATION,
     MASS_ANALYZER, SCAN_EVENT_NUMBER, MASS, SCORE, REVERSE, RETENTION_TIME,
-    combined_MZ, combined_INTENSITIES, COLLISION_ENERGY, PRECURSOR) %>%
+    combined_MZ, combined_INTENSITIES, mean_CE) %>%
     distinct()
 
 output_path <- paste(base_path, "Annotation/scan-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
