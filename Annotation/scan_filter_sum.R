@@ -46,15 +46,7 @@ tbl_filtered_psms <- tbl_psms %>%
     select(Proteins, Scan_number, frame, Precursor, obs_sequence) %>%
     distinct()
 
-tbl_filtered_scans <- tbl_filtered_psms %>%
-    select(Scan_number, frame, Precursor, obs_sequence) %>%
-    distinct() %>%
-    add_count(Scan_number, Precursor, frame) %>%
-    filter(n == 1)
-
 tbl_annotation <- tbl_mapped_precursor %>%
-    filter(obs_sequence %in% tbl_filtered_precursors$obs_sequence &
-        Precursor %in% tbl_filtered_precursors$Precursor) %>%
     filter(Score >= 70) %>%
     rename_with(toupper) %>%
     # Group by scan numbers instead of precursor
