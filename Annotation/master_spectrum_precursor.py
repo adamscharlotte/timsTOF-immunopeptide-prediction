@@ -23,8 +23,8 @@ pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 un_annot_path = base_path + "precursor-consensus/un-annotated/" + pool + ".csv"
-sum_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
-annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
+sum_path = base_path + "precursor-consensus/summed-40-ppm/" + pool + ".csv"
+# annot_path = base_path + "precursor-consensus/annotated-20-ppm/" + pool + ".csv"
 
 un_annot_df = pd.read_csv(un_annot_path)
 un_annot_df["combined_INTENSITIES"]
@@ -35,8 +35,8 @@ un_annot_df.combined_MZ = un_annot_df.combined_MZ.str.split(";").apply(lambda s:
 def binning(inp, ignoreCharges):
     ms = MasterSpectrum()
     ms.load_from_tims(inp, ignoreCharges)
-    ms.export_to_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/06102022.csv")
-    comb_ms = pd.read_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/06102022.csv")
+    ms.export_to_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/24102022.csv")
+    comb_ms = pd.read_csv(base_path + "precursor-consensus/tmp-MasterSpectrum/24102022.csv")
     precursor = inp["PRECURSOR"]
     comb_ms["PRECURSOR"] = precursor
     comb_ms = comb_ms.drop(columns=["counts", "left border", "right border", "start_mz", "ms1_charge", "rel_intensity_ratio", "counts_ratio"])
@@ -74,13 +74,13 @@ for i, sequence_numeric in enum_gen_seq_num:
 
 un_annot_df_combined["SEQUENCE_INT"] = array.tolist()
 
-annot_df = annotate_spectra(un_annot_df_combined)
-full_df = pd.concat([un_annot_df_combined.drop(columns = ["INTENSITIES", "MZ"]), annot_df], axis=1)
+# annot_df = annotate_spectra(un_annot_df_combined)
+# full_df = pd.concat([un_annot_df_combined.drop(columns = ["INTENSITIES", "MZ"]), annot_df], axis=1)
 
 un_annot_df_combined["MZ"] = [';'.join(map(str, l)) for l in un_annot_df_combined['MZ']]
 un_annot_df_combined["INTENSITIES"] = [';'.join(map(str, l)) for l in un_annot_df_combined['INTENSITIES']]
 un_annot_df_combined.to_csv(sum_path)
 
-full_df["MZ"] = [';'.join(map(str, l)) for l in full_df['MZ']]
-full_df["INTENSITIES"] = [';'.join(map(str, l)) for l in full_df['INTENSITIES']]
-full_df.to_csv(annot_path)
+# full_df["MZ"] = [';'.join(map(str, l)) for l in full_df['MZ']]
+# full_df["INTENSITIES"] = [';'.join(map(str, l)) for l in full_df['INTENSITIES']]
+# full_df.to_csv(annot_path)
