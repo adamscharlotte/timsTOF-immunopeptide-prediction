@@ -219,9 +219,53 @@ Rscript bruker_map.R "/media/kusterlab/internal_projects/active/ProteomeTools/Pr
 # ----------------------------------- SCAN-LEVEL CONSENSUS ----------------------------------
 
 name_file=all-pool-names.txt
+# name_file=sample-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
     time Rscript Annotation/scan_filter_sum.R "${array[0]}"
+done
+
+name_file=all-pool-names.txt
+# name_file=sample-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_master_spectrum.py "${array[0]}"
+done
+
+name_file=all-pool-names.txt
+# name_file=sample-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_annotate.py "${array[0]}"
+done
+
+
+scp cali_done.txt cadams@10.152.135.57:/home/cadams
+scp Annotation/scan_calibrate.py cadams@10.152.135.57:/home/cadams
+ssh cadams@10.152.135.57
+
+grep -vxFf cali_done.txt all-pool-names.txt > cali_queue.txt
+
+# name_file=all-pool-names.txt
+name_file=cali_queue.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time /home/cadams/anaconda3/envs/prosit-annotate/bin/python3 scan_calibrate.py "${array[0]}"
+    printf '%d %s' "$i" "${array[i]}"
+done
+
+name_file=all-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/calibrated_hdf5.py "${array[0]}"
 done
