@@ -24,8 +24,8 @@ args = parser.parse_args()
 pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-sum_path = base_path + "scan-consensus/summed-20-ppm/" + pool + ".csv"
-annot_path = base_path + "scan-consensus/annotated-20-ppm/" + pool + ".csv"
+sum_path = base_path + "scan-consensus/summed-40-ppm/" + pool + ".csv"
+annot_path = base_path + "scan-consensus/annotated-40-ppm/" + pool + ".csv"
 
 un_annot_df_combined = pd.read_csv(sum_path)
 

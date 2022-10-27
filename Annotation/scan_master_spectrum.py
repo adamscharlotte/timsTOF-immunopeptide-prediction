@@ -23,7 +23,7 @@ pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 un_annot_path = base_path + "scan-consensus/un-annotated/" + pool + ".csv"
-sum_path = base_path + "scan-consensus/summed-20-ppm/" + pool + ".csv"
+sum_path = base_path + "scan-consensus/summed-40-ppm/" + pool + ".csv"
 # annot_path = base_path + "precursor-consensus/annotated-20-ppm/" + pool + ".csv"
 
 un_annot_df = pd.read_csv(un_annot_path)
@@ -35,8 +35,8 @@ un_annot_df.combined_MZ = un_annot_df.combined_MZ.str.split(";").apply(lambda s:
 def binning(inp, ignoreCharges):
     ms = MasterSpectrum()
     ms.load_from_tims(inp, ignoreCharges)
-    ms.export_to_csv(base_path + "scan-consensus/tmp-MasterSpectrum/14102022.csv")
-    comb_ms = pd.read_csv(base_path + "scan-consensus/tmp-MasterSpectrum/14102022.csv")
+    ms.export_to_csv(base_path + "scan-consensus/tmp-MasterSpectrum/24102022.csv")
+    comb_ms = pd.read_csv(base_path + "scan-consensus/tmp-MasterSpectrum/24102022.csv")
     scan = inp["SCAN_NUMBER"]
     comb_ms["SCAN_NUMBER"] = scan
     comb_ms = comb_ms.drop(columns=["counts", "left border", "right border", "start_mz", "ms1_charge", "rel_intensity_ratio", "counts_ratio"])

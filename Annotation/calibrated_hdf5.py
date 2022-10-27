@@ -25,9 +25,11 @@ pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 # calibrated_path = base_path + "full-truncated-qc/calibrated/" + pool + ".csv"
-calibrated_path = base_path + "precursor-consensus/calibrated-20ppm/" + pool + ".csv"
+# calibrated_path = base_path + "precursor-consensus/calibrated-20-ppm/" + pool + ".csv"
+calibrated_path = base_path + "scan-consensus/calibrated-40-ppm/" + pool + ".csv"
 # file_path = base_path + "full-truncated-qc/calibrated-hdf5/frame-40ppm-calibrated.hdf5"
-file_path = base_path + "precursor-consensus/calibrated-hdf5/precursor-20ppm-calibrated.hdf5"
+# file_path = base_path + "precursor-consensus/calibrated-hdf5/precursor-20-ppm-calibrated.hdf5"
+file_path = base_path + "scan-consensus/calibrated-hdf5/scan-40-ppm-calibrated.hdf5"
 
 calibrated_annot_df = pd.read_csv(calibrated_path)
 
