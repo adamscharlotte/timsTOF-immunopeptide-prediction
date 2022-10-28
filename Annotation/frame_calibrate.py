@@ -48,11 +48,11 @@ args = parser.parse_args()
 # pool = "TUM_HLA2_7"
 
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
-ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + args.pool 
-# ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + pool
-annot_path = base_path + "full-truncated-qc/annotated-20ppm/" + args.pool + ".csv"
+# ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + args.pool 
+# # ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + pool
+annot_path = base_path + "full-truncated-qc/annotated-40-ppm/" + args.pool + ".csv"
 # annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
-cali_path = base_path + "full-truncated-qc/calibrated-20ppm/" + args.pool + ".csv"
+cali_path = base_path + "full-truncated-qc/calibrated-40-ppm/" + args.pool + ".csv"
 # file_path = base_path + "full-truncated-qc/calibrated-hdf5/full-truncated-qc-calibrated.hdf5"
 
 full_df = pd.read_csv(annot_path)
@@ -99,7 +99,7 @@ for charge, df_charge in grouped_charge_df:
     top_100_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
     top_100_df["SPECTRAL_ANGLE"] = top_100_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
     top_100_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
+    # top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
     groups = top_100_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY"])["SPECTRAL_ANGLE"].mean()
     groups_2 = groups.reset_index()
     ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
