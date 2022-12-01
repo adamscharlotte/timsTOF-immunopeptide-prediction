@@ -2,11 +2,6 @@ library(tidyverse)
 library(data.table)
 library(ggplot2)
 
-args <- commandArgs(trailingOnly = TRUE)
-
-pool_charge <- args[1]
-# pool_charge <- "TUM_HLA_47_1"
-
 ppm <- "20"
 base_path <- "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 sum_path <- paste(base_path, "precursor-consensus/annotated-", ppm, "-ppm/", sep = "") # nolint
@@ -36,6 +31,7 @@ tbl_sa <- df_sa %>%
         by.y = c("pool_charge", "PRECURSOR", "SEQUENCE")) %>%
     as_tibble() %>%
     rename(score_B = SCORE) %>%
+    # only look at SAs of precursors with the same score
     filter(score_A == score_B) %>%
     group_by(pool_charge, SEQUENCE) %>%
     mutate(mean_sa = mean(SPECTRAL_ANGLE)) %>%
@@ -49,7 +45,6 @@ tbl_sa <- df_sa %>%
 
 plot <- ggplot(tbl_sa, aes(x = score_A, y = mean_sa)) +
     geom_point(alpha = 0.7) +
-    # geom_jitter(shape = 16, width = 0.13) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
     labs(title = paste("Mean SA VS Andromeda Score - ", ppm, "ppm")) +
