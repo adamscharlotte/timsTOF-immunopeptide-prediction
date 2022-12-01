@@ -68,7 +68,7 @@ frame_max <- max(tbl_frames$frame)
 all_columns <- c("frame", "scan", "tof", "intensity", "retention_time")
 some_columns <- c("frame", "retention_time")
 df <- TimsR(raw_folder_path) # get data handle
-tbl_raw <- df[frame_min : frame_max, some_columns] %>%
+tbl_raw <- df[frame_min : frame_max, all_columns] %>%
     as_tibble() %>%
     distinct()
 
