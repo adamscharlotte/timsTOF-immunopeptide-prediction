@@ -5,7 +5,7 @@ library(data.table)
 
 args <- commandArgs(trailingOnly = TRUE)
 pool <- args[1]
-# pool <- "TUM_lysn_33"
+# pool <- "TUM_HLA2_88"
 
 # base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
@@ -70,6 +70,9 @@ tbl_wrong_identification <- tbl_obs_sequence %>%
 tbl_c_trunc <- tbl_mapped_sequences %>%
     filter(startsWith(SEQUENCE, OBS_SEQUENCE)) %>%
     filter(str_length(OBS_SEQUENCE) < str_length(SEQUENCE)) %>%
+    group_by(OBS_SEQUENCE) %>%
+    filter(str_length(SEQUENCE) == min(str_length(SEQUENCE))) %>%
+    ungroup() %>%
     select(-SCAN_NUMBER) %>%
     distinct()
 
@@ -77,6 +80,9 @@ tbl_internal <- tbl_mapped_sequences %>%
     filter(!startsWith(SEQUENCE, OBS_SEQUENCE)) %>%
     filter(!endsWith(SEQUENCE, OBS_SEQUENCE)) %>%
     filter(str_detect(SEQUENCE, OBS_SEQUENCE)) %>%
+    group_by(OBS_SEQUENCE) %>%
+    filter(str_length(SEQUENCE) == min(str_length(SEQUENCE))) %>%
+    ungroup() %>%
     select(-SCAN_NUMBER) %>%
     distinct()
 
