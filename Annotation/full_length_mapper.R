@@ -24,7 +24,7 @@ tbl_obs_sequence <- fread(mapped_precursor_path) %>%
     dplyr::rename(obs_sequence = Sequence) %>%
     rename_with(toupper) %>%
     spaceless() %>%
-    select(OBS_SEQUENCE, PROTEINS) %>%
+    select(OBS_SEQUENCE, PROTEINS, SCAN_NUMBER) %>%
     distinct()
 
 tbl_pool_all <- fread(meta_path) %>%
