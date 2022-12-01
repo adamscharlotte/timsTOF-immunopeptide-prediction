@@ -54,27 +54,36 @@ tbl_filtered_sequences <- tbl_mapped_sequences %>%
     ungroup()
 
 tbl_full_length <- tbl_filtered_sequences %>%
-    filter(SEQUENCE == OBS_SEQUENCE)
+    filter(SEQUENCE == OBS_SEQUENCE) %>%
+    select(-SCAN_NUMBER) %>%
+    distinct()
 
 tbl_n_trunc <- tbl_filtered_sequences %>%
     filter(endsWith(SEQUENCE, OBS_SEQUENCE)) %>%
-    filter(str_length(OBS_SEQUENCE) < str_length(SEQUENCE))
+    filter(str_length(OBS_SEQUENCE) < str_length(SEQUENCE)) %>%
+    select(-SCAN_NUMBER) %>%
+    distinct()
 
 tbl_wrong_identification <- tbl_obs_sequence %>%
     filter(!OBS_SEQUENCE %in% tbl_filtered_sequences$OBS_SEQUENCE)
 
 tbl_c_trunc <- tbl_mapped_sequences %>%
     filter(startsWith(SEQUENCE, OBS_SEQUENCE)) %>%
-    filter(str_length(OBS_SEQUENCE) < str_length(SEQUENCE))
+    filter(str_length(OBS_SEQUENCE) < str_length(SEQUENCE)) %>%
+    select(-SCAN_NUMBER) %>%
+    distinct()
 
 tbl_internal <- tbl_mapped_sequences %>%
     filter(!startsWith(SEQUENCE, OBS_SEQUENCE)) %>%
     filter(!endsWith(SEQUENCE, OBS_SEQUENCE)) %>%
-    filter(str_detect(SEQUENCE, OBS_SEQUENCE))
+    filter(str_detect(SEQUENCE, OBS_SEQUENCE)) %>%
+    select(-SCAN_NUMBER) %>%
+    distinct()
 
 tbl_wrong_identification %>% count(PROTEINS)
 
 tbl_info <- tibble(pool_name = pool, pool_peptides = nrow(tbl_pool_all),
+    total_psm = nrow(tbl_obs_sequence),
     pool_correct = nrow(filter(tbl_filtered_sequences, PROTEINS == pool)),
     pool_fl = nrow(filter(tbl_full_length, PROTEINS == pool)),
     pool_trunc = nrow(filter(tbl_n_trunc, PROTEINS == pool)),

@@ -91,7 +91,8 @@ for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
     # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/calibrated_hdf5.py "${array[0]}"
-    time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_hdf5.py "${array[0]}"
+    # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_hdf5.py "${array[0]}"
+    time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/trunc_peptides.py "${array[0]}"
 done
 
 # --------------------------------------- SHUFFLE SPLIT ----------------------------------------
@@ -189,3 +190,13 @@ done
 scp Annotation/bruker_map.R cadams@10.152.135.57:/home/cadams
 
 Rscript bruker_map.R "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/190926_TIMSiDE_LCMS02_sample-3_90min_R2_Slot1-30_01_3622.d" "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/combined/txt" "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/PXD030334/precursor-mapped/S3_R2.csv"
+
+# -------------------------------------- GENERAL STATS --------------------------------------
+
+name_file=Names/all-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time Rscript Analysis-code/identification_stats.R "${array[0]}"
+done
