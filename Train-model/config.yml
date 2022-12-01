@@ -1,0 +1,62 @@
+# genera
+
+name: prosit_1.0                      # neural network name - doesn't seem to be used
+verbose: 1                            # verbose mode (true or false) - doesn't seem to be used
+
+custom_input_pipeline: False          # use custom function in io_utils/load_training_data (just for quick tests)
+
+# data
+train_data: /scratch/data/scan-40-ppm-calibrated-mapped_train.hdf5       # train data
+val_data:   /scratch/data/scan-40-ppm-calibrated-mapped_test.hdf5         # validation data
+test_data:  /scratch/data/scan-40-ppm-calibrated-mapped_test.hdf5
+
+
+# test_data:  /scratch/vitor/data/PTM_data/ho_augmented_10s_20220214_01.hdf5          # test (hold-out) data (for prediction)
+
+use_generator: true                   # whether to use a generator or not for the dataset (usually only necessary when predicting intensities)
+
+x:                                    # feature names (inputs)
+- obs_sequence_integer                # list of numbers representing the amino acid sequence (see ALPHABET in constants.py)
+- precursor_charge_onehot             # precursor charge e.g. for +4, [False, False, False,  True, False, False]
+- collision_energy_aligned_normed     # normalized collision energy: 0-1
+
+y:                                    # label names (outputs)
+- intensities_raw                     # relative intensities: 0-1 or -1 (see notes on losses.py)
+
+loss: masked_spectral_distance        # loss (as defined in losses.py
+
+weights_filename_metric: val_loss
+
+batch_size: 2000                      # batch size
+epochs: 600
+
+optimizer:                            # optimizer
+  name: adam                          # identifier recognized by keras.optimizers.get()
+  lr: 0.001                           # learning rate (default: 0.001) - overwritten if using cyclic_lr
+  decay: 0.001                        # learning rate decay over each update (default: 0) - overwritten if using cyclic_lr
+
+early_stopping:                       # early stopping
+  patience: 30                        # number of epochs during which the loss must not improve (default: 0)
+  min_delta: 0.0001                   # anything below this value is not considered an improvement (default: 0)
+
+cyclic_lr:                            # cyclic learning rate (better than ReduceLROnPlateau for intensity prediction)
+  max_lr: 0.0002                      # higher boundry of the lr (decays in mode "exp_range")
+  base_lr: 0.00001                    # lower boundry of the lr (this never changes during training)
+  mode: triangular                    # can be "triangular", "triangular2" or "exp_range"
+  gamma: 0.95
+
+time_history: True                    #
+
+# others
+
+prediction_type: intensity
+
+alphabet: {A: 1, C: 2, D: 3, E: 4, F: 5, G: 6, H: 7, I: 8, K: 9, L: 10, M: 11, N: 12, P: 13, Q: 14, R: 15, S: 16, T: 17, V: 18, W: 19, Y: 20, M_OX: 21}
+
+# * This is the alphabet used to generate the dataset (i.e. which amino acids correspond to which numbers).
+#   It's only used to create the model (which actually only depends on the length of the alphabet)
+#     and obviously for peak annotation, so this doesn't have to be defined in order for
+#     training and prediction to work (as long as the model matches the data).
+#   Also, it was previously defined in constants.py.
+#   Yet, because the alphabet is dependent on the dataset generation, it's preferable
+#     to keep this here so the information doesn't get mixed or lost.
