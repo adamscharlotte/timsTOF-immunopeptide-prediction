@@ -46,13 +46,13 @@ parser.add_argument('pool', type=str)					# Filename
 args = parser.parse_args()
 
 # pool = "TUM_HLA2_7"
-
+pool = args.pool
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
-ce_sa_path = base_path + "precursor-consensus/spectral-angle/" + args.pool 
+ce_sa_path = base_path + "precursor-consensus/spectral-angle/" + pool
 # ce_sa_path = base_path + "full-truncated-qc/spectral-angle/" + pool
-annot_path = base_path + "precursor-consensus/annotated-20ppm/" + args.pool + ".csv"
+annot_path = base_path + "precursor-consensus/annotated-20-ppm/" + pool + ".csv"
 # annot_path = base_path + "precursor-consensus/annotated/" + pool + ".csv"
-cali_path = base_path + "precursor-consensus/calibrated-20ppm/" + args.pool + ".csv"
+cali_path = base_path + "precursor-consensus/calibrated-20-ppm/" + pool + ".csv"
 # file_path = base_path + "precursor-consensus/calibrated-hdf5/full-truncated-qc-calibrated.hdf5"
 
 full_df = pd.read_csv(annot_path)

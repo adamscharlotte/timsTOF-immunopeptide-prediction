@@ -24,16 +24,16 @@ args = parser.parse_args()
 pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-sum_path = base_path + "precursor-consensus/summed/" + pool + ".csv"
-annot_path = base_path + "precursor-consensus/annotated-20ppm/" + pool + ".csv"
+sum_path = base_path + "precursor-consensus/summed-20-ppm/" + pool + ".csv"
+annot_path = base_path + "precursor-consensus/annotated-20-ppm/" + pool + ".csv"
 
 un_annot_df_combined = pd.read_csv(sum_path)
 
 un_annot_df_combined.MZ = un_annot_df_combined.MZ.str.split(";").apply(lambda s: [float(x) for x in s])
 un_annot_df_combined.INTENSITIES = un_annot_df_combined.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
 
-# un_annot_df_combined[un_annot_df_combined["PRECURSOR"] == 8200][["INTENSITIES", "MZ"]].values
-# # un_annot_df_combined[un_annot_df_combined["PRECURSOR"] == 5323][["INTENSITIES", "MZ"]].values
+# un_annot_df_combined[un_annot_df_combined["PRECURSOR"] == 9947][["INTENSITIES", "MZ"]].values
+# un_annot_df_combined[un_annot_df_combined["PRECURSOR"] == 5323][["INTENSITIES", "MZ"]].values
 
 for i in range (len(un_annot_df_combined)):
     zipped_list = zip(un_annot_df_combined.iloc[i]["MZ"], un_annot_df_combined.iloc[i]["INTENSITIES"])
