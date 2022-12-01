@@ -48,7 +48,10 @@ tbl_mapped_sequences <- tbl_obs_sequence %>%
 
 tbl_filtered_sequences <- tbl_mapped_sequences %>%
     filter(endsWith(SEQUENCE, OBS_SEQUENCE)) %>%
-    filter(str_length(OBS_SEQUENCE) <= str_length(SEQUENCE))
+    filter(str_length(OBS_SEQUENCE) <= str_length(SEQUENCE)) %>%
+    group_by(OBS_SEQUENCE) %>%
+    filter(str_length(SEQUENCE) == min(str_length(SEQUENCE))) %>%
+    ungroup()
 
 output_path <- paste(base_path, "Annotation/full-length-map/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_filtered_sequences, output_path)
