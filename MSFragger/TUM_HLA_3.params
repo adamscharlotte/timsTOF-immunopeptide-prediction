@@ -1,18 +1,18 @@
 # MSFragger-3.2
 num_threads = 28                            # Number of CPU threads to use. 
-database_name = /data/antwerpen/207/vsc20709/interim/Human_2017March_decoy.fasta
+database_name = /data/antwerpen/207/vsc20709/fasta/TUM_HLA_3.fasta
 
-precursor_mass_lower = -20                  # Lower bound of the precursor mass window.
-precursor_mass_upper = 20                   # Upper bound of the precursor mass window.
+precursor_mass_lower = -40                  # Lower bound of the precursor mass window.
+precursor_mass_upper = 40                   # Upper bound of the precursor mass window.
 precursor_mass_units = 1                    # Precursor mass tolerance units (0 for Da, 1 for ppm).
 data_type = 0                               # Data type (0 for DDA, 1 for DIA, 2 for DIA-narrow-window).
-precursor_true_tolerance = 20               # True precursor mass tolerance (window is +/- this value).
+precursor_true_tolerance = 40               # True precursor mass tolerance (window is +/- this value).
 precursor_true_units = 1                    # True precursor mass tolerance units (0 for Da, 1 for ppm).
-fragment_mass_tolerance = 20                # Fragment mass tolerance (window is +/- this value).
+fragment_mass_tolerance = 40                # Fragment mass tolerance (window is +/- this value).
 fragment_mass_units = 1                     # Fragment mass tolerance units (0 for Da, 1 for ppm).
 calibrate_mass = 2                          # Perform mass calibration (0 for OFF, 1 for ON, 2 for ON and find optimal parameters).
-write_calibrated_mgf = 0                    # Write calibrated MS2 scan to a MGF file (0 for No and 1 for writing MGF file).
-decoy_prefix = DECOY_                       # Prefix of the decoy protein entries. Used for parameter optimization only.
+write_calibrated_mgf = 1                    # Write calibrated MS2 scan to a MGF file (0 for No and 1 for writing MGF file).
+decoy_prefix = rev_                         # Prefix of the decoy protein entries. Used for parameter optimization only.
 
 isotope_error = 0/1                         # Also search for MS/MS events triggered on specified isotopic peaks.
 mass_offsets = 0                            # Creates multiple precursor tolerance windows with specified mass offsets.
@@ -24,7 +24,7 @@ localize_delta_mass = 0                     # Include fragment ions mass-shifted
 delta_mass_exclude_ranges = (-1.5,3.5)      # Exclude mass range for shifted ions searching.
 fragment_ion_series = b,y                   # Ion series used in search, specify any of a,b,c,x,y,z,b-18,y-18,b~,y~,Y (comma separated).
 # ion_series_definitions =                  # User defined ion series. Example: "b* N -17.026548;b0 N -18.010565".
-search_enzyme_name = nonspecific          # Name of enzyme to be written to the pepXML file.
+search_enzyme_name = nonspecific            # Name of enzyme to be written to the pepXML file.
 search_enzyme_cutafter = ARNDCQEGHILKMFPSTWYV                 # Residues after which the enzyme cuts.
 search_enzyme_butnotafter =                 # Residues that the enzyme will not cut before.
 
@@ -34,8 +34,8 @@ clip_nTerm_M = 1                            # Specifies the trimming of a protei
 # maximum of 16 mods - amino acid codes, * for any amino acid,
 # [ and ] specifies protein termini, n and c specifies
 # peptide termini
-# variable_mod_01 = 15.994915 M 3
-# variable_mod_02 = 42.010565 [^ 1
+variable_mod_01 = 15.994915 M 3
+variable_mod_02 = 42.010565 [^ 1
 # variable_mod_03 = 79.966331 STY 3
 # variable_mod_04 = -17.02650 nQnC 1
 # variable_mod_05 = -18.01060 nE 1
@@ -43,8 +43,8 @@ clip_nTerm_M = 1                            # Specifies the trimming of a protei
 # variable_mod_07 = 0.00000 site_07 3
 
 allow_multiple_variable_mods_on_residue = 0 # Allow each residue to be modified by multiple variable modifications (0 or 1).
-max_variable_mods_per_peptide = 0           # Maximum total number of variable modifications per peptide.
-max_variable_mods_combinations = 0          # Maximum number of modified forms allowed for each peptide (up to 65534).
+max_variable_mods_per_peptide = 3           # Maximum total number of variable modifications per peptide.
+max_variable_mods_combinations = 5000       # Maximum number of modified forms allowed for each peptide (up to 65534).
 mass_diff_to_variable_mod = 0               # Put mass diff as a variable modification. 0 for no; 1 for yes and remove delta mass; 2 for yes and keep delta mass.
 
 output_format = tsv                         # File format of output files (tsv, pin, pepxml, tsv_pin, tsv_pepxml, pepxml_pin, or tsv_pepxml_pin).
@@ -56,7 +56,7 @@ precursor_charge = 1 4                      # Assumed range of potential precurs
 override_charge = 0                         # Ignores precursor charge and uses charge state specified in precursor_charge range (0 or 1).
 
 digest_min_length = 8                       # length of the peptides between 8 and 25AA
-digest_max_length = 25
+digest_max_length = 12
 digest_mass_range = 500.0 5000.0            # Mass range of peptides to be generated during in-silico digestion in Daltons.
 max_fragment_charge = 2                     # Maximum charge state for theoretical fragments to match (1-4).
 # excluded_scan_list_file =                 # Text file containing a list of scan names to be ignored in the search.
