@@ -69,6 +69,7 @@ for i in range (len(df_precursor_scans_rt)):
     df_precursor_scans_rt.at[i, "intensity"] = list_2
 
 # Write to an mgf
+df_precursor_scans_rt["CHARGE"] = 0
 spectra_list = []
 for i in range (len(df_precursor_scans_rt)):
     mz_list = df_precursor_scans_rt.iloc[i]["mz"]
@@ -78,14 +79,14 @@ for i in range (len(df_precursor_scans_rt)):
     # frame = df_precursor_scans.iloc[i]["FRAME"].astype(str)
     precursor = df_precursor_scans_rt.iloc[i]["Precursor"].astype(str)
     # title = frame + "_" + precursor
-    title = precursor
+    title = "test." + precursor + "." + precursor + ".0"
     isolationmz = df_precursor_scans_rt.iloc[i]["IsolationMz"]
     collisionenergy = df_precursor_scans_rt.iloc[i]["CollisionEnergy"]
     # mass = df_precursor_scans.iloc[i]["MASS"]
     retentiontime = df_precursor_scans_rt.iloc[i]["RETENTION_TIME"]
-    # charge = df_precursor_scans.iloc[i][charge_name]
+    charge = df_precursor_scans_rt.iloc[i]["CHARGE"]
     # mgf_params = dict({'title' : title, 'pepmass' : mass, 'rtinseconds' : retentiontime, 'charge' : charge})
-    mgf_params = dict({'title' : title, 'pepmass' : isolationmz, 'rtinseconds' : retentiontime})
+    mgf_params = dict({'title' : title, 'pepmass' : isolationmz, 'rtinseconds' : retentiontime, 'charge' : charge})
     spectra_dict = dict({'m/z array' : mz_array, 'intensity array' : intensity_array, 'params' : mgf_params})
     spectra_list.append(spectra_dict)
 
