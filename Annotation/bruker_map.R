@@ -27,10 +27,13 @@ output_path <- args[3]
 
 # base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 base_path <- "/Users/adams/Projects/300K/" # nolint
-raw_path <- paste(base_path, "PXD030334/190926_TIMSiDE_LCMS02_sample-3_90min_R2_Slot1-30_01_3622.d", sep = "") # nolint
-txt_path <- paste(base_path, "PXD030334/combined/txt/", sep = "")
-output_path <- paste(base_path, "PXD030334/precursor-mapped/S3_R2.csv", sep = "")
+# raw_path <- paste(base_path, "PXD030334/190926_TIMSiDE_LCMS02_sample-3_90min_R2_Slot1-30_01_3622.d", sep = "") # nolint
+# txt_path <- paste(base_path, "PXD030334/combined/txt/", sep = "")
+# output_path <- paste(base_path, "PXD030334/precursor-mapped/S3_R2.csv", sep = "")
 
+raw_path <- paste(base_path, "2022-library-run/raw-folders/HLAI_1_96_p2-A3_S2-A3_1_6928.d", sep = "") # nolint
+txt_path <- paste(base_path, "2022-library-run/MaxQuant/TUM_HLA_3-txt/", sep = "") # nolint
+all_columns <- c('frame','scan','tof','intensity')
 setwd(txt_path)
 
 tbl_msms <- fread("msms.txt") %>% as_tibble()
@@ -61,8 +64,9 @@ frame_max <- max(tbl_pasef$frame)
 frame_min
 frame_max
 df_tims <- TimsR(raw_path) # get data handle
-df_tims
 df_raw <- df_tims[all_columns]
+print(df_tims)
+X = df_tims[c(1,5,67)]
 
 tbl_raw <- df_raw %>%
     as_tibble() %>%
