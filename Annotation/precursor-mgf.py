@@ -1,9 +1,18 @@
 # ssh vsc20709@login-leibniz.hpc.uantwerpen.be
+ssh cadams@10.152.135.57
+cd /home/cadams/anaconda3/envs/
+conda activate prosit-tims
+conda install -c anaconda python=3.8
+conda install -c conda-forge python-devtools 
+pip install opentims_bruker_bridge
+pip install opentimspy
 
 import sqlite3
 import pandas as pd
 from timspy.df import TimsPyDF
 from mgf_filter.masterSpectrum import MasterSpectrum
+import numpy as np
+from pyteomics import mgf
 
 # import argparse, pathlib
 # parser = argparse.ArgumentParser()
@@ -71,4 +80,24 @@ for index, line in df_precursor_values.iterrows():
 df_bin_collapsed = df_bin_result.groupby("Precursor").agg(list)
 df_precursor_scans = pd.merge(df_precursor_values, df_bin_collapsed, on="Precursor")
 
-df_precursor_scans
+# Write to an mgf
+spectra_list = []
+for i in range (len(df_precursor_scans)):
+    mz_list = df_precursor_scans.iloc[i]["MZ"]
+    mz_array = np.array(mz_list)
+    intensity_list = df_precursor_scans.iloc[i]["INTENSITIES"]
+    intensity_array = np.array(intensity_list).astype(int)
+    frame = df_precursor_scans.iloc[i]["FRAME"].astype(str)
+    precursor = df_precursor_scans.iloc[i]["PRECURSOR"].astype(str)
+    title = frame + "_" + precursor
+    mass = df_precursor_scans.iloc[i]["MASS"]
+    retentiontime = df_precursor_scans.iloc[i]["RETENTION_TIME"]
+    # charge = df_precursor_scans.iloc[i][charge_name]
+    mgf_params = dict({'title' : title, 'pepmass' : mass, 'rtinseconds' : retentiontime, 'charge' : charge})
+    spectra_dict = dict({'m/z array' : mz_array, 'intensity array' : intensity_array, 'params' : mgf_params})
+    spectra_list.append(spectra_dict)
+
+mgf.write(spectra = spectra_list, output = mgf_path)
+
+
+mgf_path
