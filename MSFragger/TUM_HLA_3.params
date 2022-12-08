@@ -53,7 +53,7 @@ output_max_expect = 50                      # Suppresses reporting of PSM if top
 report_alternative_proteins = 0             # Report alternative proteins for peptides that are found in multiple proteins (0 for no, 1 for yes).
 
 precursor_charge = 1 4                      # Assumed range of potential precursor charge states. Only relevant when override_charge is set to 1.
-override_charge = 0                         # Ignores precursor charge and uses charge state specified in precursor_charge range (0 or 1).
+override_charge = 1                         # Ignores precursor charge and uses charge state specified in precursor_charge range (0 or 1).
 
 digest_min_length = 8                       # length of the peptides between 8 and 25AA
 digest_max_length = 12
