@@ -5,7 +5,7 @@ library(data.table)
 
 args <- commandArgs(trailingOnly = TRUE)
 pool <- args[1]
-# pool <- "TUM_lysn_33"
+# pool <- "TUM_aspn_1"
 
 # base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
@@ -52,6 +52,14 @@ tbl_filtered_sequences <- tbl_mapped_sequences %>%
     group_by(OBS_SEQUENCE) %>%
     filter(str_length(SEQUENCE) == min(str_length(SEQUENCE))) %>%
     ungroup()
+
+if (!nrow(tbl_filtered_sequences %>%
+    group_by(SCAN_NUMBER) %>%
+    filter(n() == 1) %>%
+    ungroup()
+    ) ==
+    nrow(tbl_filtered_sequences)) warning(
+    "Some scans are present multiple times. This can cause duplicates.")
 
 output_path <- paste(base_path, "Annotation/full-length-map/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_filtered_sequences, output_path)
