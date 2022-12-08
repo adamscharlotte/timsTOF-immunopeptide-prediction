@@ -94,3 +94,7 @@ mgf.write(spectra = spectra_list, output = mgf_path)
 
 pasef_df['Precursor'].nunique()
 df_precursor_scans_rt['Precursor'].nunique()
+
+df_merged_mass = pd.merge(df_csv[['MASS', 'PRECURSOR', 'CHARGE']], df_precursor_scans_rt[['Precursor', 'IsolationMz']], left_on='PRECURSOR', right_on='Precursor').drop_duplicates()
+df_merged_mass[df_merged_mass["PRECURSOR"] == 7020]
+df_merged_mass[df_merged_mass["PRECURSOR"] == 15090]
