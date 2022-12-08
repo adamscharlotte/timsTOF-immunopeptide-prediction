@@ -1,9 +1,14 @@
-# /home/cadams/anaconda3/envs/prosit-tims/bin/python3
+# ssh cadams@10.152.135.57
+/home/cadams/anaconda3/envs/prosit-tims/bin/python3
 # /Users/adams/opt/miniconda3/envs/prosit-tims/bin/python3
 # screen -r tims_tof
-# conda activate prosit-tims
+conda activate prosit-tims
+pip install python-dev-tools
+pip install opentims_bruker_bridge
+pip install opentimspy
+pip uninstall numpy
+pip install numpy==1.19.3
 # pip install git+https://github.com/michalsta/opentims
-
 
 import pandas as pd
 import numpy as np
