@@ -26,9 +26,7 @@ pool <- args[1]
 
 base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 meta_path <- paste(base_path, "Metadata/full-meta-map.txt", sep = "")
-# meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
 
-meta_pool_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 tbl_meta <- fread(meta_path) %>% as_tibble()
 plate <- tbl_meta %>% filter(pool_name == pool) %>% pull(plate)
 raw_folder <- tbl_meta %>% filter(pool_name == pool) %>% pull(folder_names)
