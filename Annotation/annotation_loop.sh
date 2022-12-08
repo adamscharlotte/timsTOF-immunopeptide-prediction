@@ -15,7 +15,7 @@ done
 
 # -------------------------------------- FILTER DATA ----------------------------------------
 
-name_file=all-pool-names.txt
+name_file=Names/all-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
@@ -28,7 +28,7 @@ done
 
 # -------------------------------- CREATE CONSENSUS SPECTRA ---------------------------------
 
-name_file=all-pool-names.txt
+name_file=Names/all-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
@@ -39,7 +39,7 @@ done
 
 # ---------------------------------------- ANNOTATE -----------------------------------------
 
-name_file=all-pool-names.txt
+name_file=Names/all-pool-names.txt
 # name_file=sample-pool-names.txt
 # name_file=annot_queue
 lines=`tail -n+1 $name_file`
@@ -75,7 +75,7 @@ done
 
 # --------------------------------- MAP FULL-LENGTH SEQUENCES --------------------------------
 
-name_file=all-pool-names.txt
+name_file=Names/all-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
@@ -85,7 +85,7 @@ done
 
 # --------------------------------------- GENERATE HDF5 ---------------------------------------
 
-name_file=all-pool-names.txt
+name_file=Names/all-pool-names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
