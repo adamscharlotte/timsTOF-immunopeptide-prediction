@@ -32,7 +32,9 @@ tbl_top_sa_1 <- tbl_charge_1 %>%
     group_by(SCAN_NUMBER) %>%
     top_n(1, SPECTRAL_ANGLE) %>%
     ungroup() %>%
-    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY)
+    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY) %>%
+    mutate(MySpecificBins =
+        cut(SPECTRAL_ANGLE, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
 
 tbl_top_sa_1 %>% arrange(SPECTRAL_ANGLE)
 
@@ -49,7 +51,9 @@ tbl_top_sa_2 <- tbl_charge_2 %>%
     group_by(SCAN_NUMBER) %>%
     top_n(1, SPECTRAL_ANGLE) %>%
     ungroup() %>%
-    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY)
+    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY) %>%
+    mutate(MySpecificBins =
+        cut(SPECTRAL_ANGLE, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
 
 tbl_top_sa_2 %>% arrange(SPECTRAL_ANGLE)
 
@@ -66,7 +70,9 @@ tbl_top_sa_3 <- tbl_charge_3 %>%
     group_by(SCAN_NUMBER) %>%
     top_n(1, SPECTRAL_ANGLE) %>%
     ungroup() %>%
-    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY)
+    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY) %>%
+    mutate(MySpecificBins =
+        cut(SPECTRAL_ANGLE, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
 
 tbl_top_sa_3 %>% arrange(SPECTRAL_ANGLE)
 
@@ -82,7 +88,9 @@ tbl_top_sa_4 <- tbl_charge_4 %>%
     group_by(SCAN_NUMBER) %>%
     top_n(1, SPECTRAL_ANGLE) %>%
     ungroup() %>%
-    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY)
+    mutate(CE_diff = ORIG_COLLISION_ENERGY - COLLISION_ENERGY) %>%
+    mutate(MySpecificBins =
+        cut(SPECTRAL_ANGLE, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
 
 tbl_top_sa_4 %>% arrange(SPECTRAL_ANGLE)
 
@@ -91,25 +99,30 @@ ggplot(tbl_top_sa_4, aes(ORIG_COLLISION_ENERGY, COLLISION_ENERGY)) +
 
 plot_1 <- ggplot(tbl_top_sa_1,
     aes(x = MASS, y = CE_diff)) +
-    geom_point(aes(colour = SPECTRAL_ANGLE)) +
-    scale_colour_viridis_c()
+    geom_point(aes(colour = MySpecificBins), alpha = 0.8) +
+    scale_colour_manual(values =
+        c("#430254", "#3B538B", "#20908C", "#5DC763", "#FDE624"))
 
 plot_2 <- ggplot(tbl_top_sa_2,
     aes(x = MASS, y = CE_diff)) +
-    geom_point(aes(colour = SPECTRAL_ANGLE)) +
-    scale_colour_viridis_c()
+    geom_point(aes(colour = MySpecificBins), alpha = 0.8) +
+    scale_colour_manual(values =
+        c("#430254", "#3B538B", "#20908C", "#5DC763", "#FDE624"))
 
 plot_3 <- ggplot(tbl_top_sa_3,
     aes(x = MASS, y = CE_diff)) +
-    geom_point(aes(colour = SPECTRAL_ANGLE)) +
-    scale_colour_viridis_c()
+    geom_point(aes(colour = MySpecificBins), alpha = 0.8) +
+    scale_colour_manual(values =
+        c("#430254", "#3B538B", "#20908C", "#5DC763", "#FDE624"))
 
 plot_4 <- ggplot(tbl_top_sa_4, aes(x = MASS, y = CE_diff)) +
-    geom_point(aes(colour = SPECTRAL_ANGLE)) +
-    scale_colour_viridis_c()
+    geom_point(aes(colour = MySpecificBins), alpha = 0.8) +
+    scale_colour_manual(values =
+        c("#430254", "#3B538B", "#20908C", "#5DC763", "#FDE624"))
 
-ggarrange(plot_1, plot_2, plot_3, plot_4, ncol = 2, nrow = 2,
+ggarrange(plot_1, plot_4, plot_2, plot_3, ncol = 2, nrow = 2,
     common.legend = TRUE, legend = "bottom",
     labels = c("A", "B", "C", "D"))
+
 
 # plot_3 + plot_4 + plot_layout(guides = "collect")
