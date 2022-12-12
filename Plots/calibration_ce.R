@@ -118,7 +118,7 @@ plot_2 <- ggplot(tbl_top_sa_2,
     xlab("Peptide mass") +
     ylab("original CE - top CE") +
     scale_colour_manual(values =
-        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254")
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"),
         name = "Spectral Angle")
 
 plot_3 <- ggplot(tbl_top_sa_3,
@@ -139,7 +139,7 @@ plot_4 <- ggplot(tbl_top_sa_4,
     xlab("Peptide mass") +
     ylab("original CE - top CE") +
     scale_colour_manual(values =
-        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254")
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"),
         name = "Spectral Angle")
 
 leg <- get_legend(plot_3)
@@ -158,3 +158,50 @@ ggsave(plot_path, legend_plot, width = 32, height = 14, units = "cm")
 
 
 # --------------
+
+plot_1 <- ggplot(tbl_top_sa_1,
+    aes(x = COLLISION_ENERGY, y = ORIG_COLLISION_ENERGY,
+    fill = MySpecificBins)) +
+    geom_point(aes(colour = MySpecificBins), alpha = 0.7) +
+    theme_minimal() +
+    xlab("Top CE") +
+    ylab("Original CE") +
+    scale_colour_manual(values =
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"))
+
+plot_2 <- ggplot(tbl_top_sa_2,
+    aes(x = COLLISION_ENERGY, y = ORIG_COLLISION_ENERGY,
+    fill = MySpecificBins)) +
+    geom_point(aes(colour = MySpecificBins), alpha = 0.7) +
+    theme_minimal() +
+    xlab("Top CE") +
+    ylab("Original CE") +
+    scale_colour_manual(values =
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"))
+
+plot_3 <- ggplot(tbl_top_sa_3,
+    aes(x = COLLISION_ENERGY, y = ORIG_COLLISION_ENERGY,
+    fill = MySpecificBins)) +
+    geom_point(aes(colour = MySpecificBins), alpha = 0.7) +
+    theme_minimal() +
+    xlab("Top CE") +
+    ylab("Original CE") +
+    scale_colour_manual(values =
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"))
+
+plot_4 <- ggplot(tbl_top_sa_4,
+    aes(x = COLLISION_ENERGY, y = ORIG_COLLISION_ENERGY,
+    fill = MySpecificBins)) +
+    geom_point(aes(colour = MySpecificBins), alpha = 0.7) +
+    theme_minimal() +
+    xlab("Top CE") +
+    ylab("Original CE") +
+    scale_colour_manual(values =
+        c("#FDE624", "#5DC763", "#20908C", "#3B538B", "#430254"))
+
+full_plot <- ggarrange(plot_1, plot_2, plot_3, plot_4,
+    ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom",
+    labels = c("A", "B", "C", "D"))
+
+plot_path <- "/Users/adams/Projects/300K/Results/Figures/CE/ce_vs_calibrated_ce.png" # nolint
+ggsave(plot_path, full_plot, width = 32, height = 22, units = "cm")
