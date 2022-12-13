@@ -30,7 +30,7 @@ def get_spectral_angle(intensities):
     epsilon = 1e-7
     list_1 = np.argwhere(true>0)
     list_2 = np.argwhere(pred>0)
-    indices = np.union1d(list_1,list_1)
+    indices = np.union1d(list_1,list_2)
     pred_masked = pred[indices]
     true_masked = true[indices]
     true_masked += epsilon
@@ -50,6 +50,7 @@ pool = args.pool
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
 annot_path = base_path + "scan-consensus/annotated-40-ppm/" + pool + ".csv"
 cali_path = base_path + "scan-consensus/calibrated-40-ppm/" + pool + ".csv"
+ce_sa_path = base_path + "scan-consensus/spectral-angle/" + pool
 
 full_df = pd.read_csv(annot_path)
 full_df.INTENSITIES = full_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -92,26 +93,27 @@ for charge, df_charge in grouped_charge_df:
                                     collision_energies=top_100_df["COLLISION_ENERGY"].values/100.0,
                                                         models=['Prosit_2020_intensity_hcd'],
                                                         disable_progress_bar=True)
-    
     top_100_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
     top_100_df["SPECTRAL_ANGLE"] = top_100_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
     top_100_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    # top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
-    groups = top_100_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY"])["SPECTRAL_ANGLE"].mean()
-    groups_2 = groups.reset_index()
-    ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
-    calib_group = groups_2[ids]
-    calib_group['delta_collision_energy'] = calib_group['COLLISION_ENERGY'] - calib_group['ORIG_COLLISION_ENERGY']
-    ce_alignment = calib_group['delta_collision_energy']
-    best_ce = ce_alignment.median()
-    best_ce
-    df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + best_ce
-    appended_data.append(df_charge)
+    top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
 
-calibrated_annot_df = pd.concat(appended_data)
-calibrated_annot_df['aligned_collision_energy'] = calibrated_annot_df['aligned_collision_energy'].apply(lambda x : float(round(x)))
+#     groups = top_100_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY"])["SPECTRAL_ANGLE"].mean()
+#     groups_2 = groups.reset_index()
+#     ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
+#     calib_group = groups_2[ids]
+#     calib_group['delta_collision_energy'] = calib_group['COLLISION_ENERGY'] - calib_group['ORIG_COLLISION_ENERGY']
+#     ce_alignment = calib_group['delta_collision_energy']
+#     best_ce = ce_alignment.median()
+#     best_ce
+#     df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + best_ce
+#     appended_data.append(df_charge)
 
-calibrated_annot_df_save = calibrated_annot_df
-calibrated_annot_df_save["MZ"] = [';'.join(map(str, l)) for l in calibrated_annot_df_save['MZ']]
-calibrated_annot_df_save["INTENSITIES"] = [';'.join(map(str, l)) for l in calibrated_annot_df_save['INTENSITIES']]
-calibrated_annot_df_save.to_csv(cali_path)
+# calibrated_annot_df = pd.concat(appended_data)
+
+# calibrated_annot_df['aligned_collision_energy'] = calibrated_annot_df['aligned_collision_energy'].apply(lambda x : float(round(x)))
+
+# calibrated_annot_df_save = calibrated_annot_df
+# calibrated_annot_df_save["MZ"] = [';'.join(map(str, l)) for l in calibrated_annot_df_save['MZ']]
+# calibrated_annot_df_save["INTENSITIES"] = [';'.join(map(str, l)) for l in calibrated_annot_df_save['INTENSITIES']]
+# calibrated_annot_df_save.to_csv(cali_path)
