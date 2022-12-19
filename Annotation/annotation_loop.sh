@@ -90,8 +90,8 @@ lines=`tail -n+1 $name_file`
 for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
-    # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/calibrated_hdf5.py "${array[0]}"
-    # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_hdf5.py "${array[0]}"
+    # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/calibrated_df_precursor_scans.py "${array[0]}"
+    # time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/scan_df_precursor_scans.py "${array[0]}"
     time /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3 Annotation/trunc_peptides.py "${array[0]}"
 done
 
@@ -99,7 +99,7 @@ done
 ssh cadams@10.152.135.57
 cd /home/cadams/ozapft/scripts
 
-# Adjust the name of the hdf5 file
+# Adjust the name of the df_precursor_scans file
 view shuffle.sh
 
 # Run script
@@ -152,8 +152,18 @@ do
     Rscript Plots/sa_boxplot_compare.R "${array[0]}"
 done
 
-# ----------------------------------------- CE PLOTS ----------------------------------------
+# ------------------------------------ CALIBRATION CE PLOTS ---------------------------------
+# scp Annotation/scan_calibrate.py cadams@10.152.135.57:/home/cadams
 
+name_file=all-pool-names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time /home/cadams/anaconda3/envs/prosit-annotate/bin/python3 scan_calibrate.py "${array[0]}"
+done
+
+# ----------------------------------------- CE PLOTS ----------------------------------------
 scp Plots/prepare_ce_df.R cadams@10.152.135.57:/home/cadams
 # scp Plots/prepare_qc_in_trap.R cadams@10.152.135.57:/home/cadams
 # scp done_pool.txt cadams@10.152.135.57:/home/cadams
@@ -199,4 +209,14 @@ for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
     time Rscript Analysis-code/identification_stats.R "${array[0]}"
+done
+
+# ------------------------------------- GENERATE FASTA --------------------------------------
+
+name_file=Names/tryptic_pool_names.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    time Rscript Fasta/create_fasta.R "${array[0]}"
 done
