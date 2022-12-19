@@ -5,13 +5,14 @@ library(stringr)
 # pool <- "HLA-II"
 # pool <- "HLA-I"
 # pool <- "LysN"
-pool <- "AspN"
+# pool <- "AspN"
 
-pool_name_output_path <- paste("/Users/adams/Projects/300K/2022-library-run/metadata/poolnames/", pool, "_names.txt", sep="")
-meta_output_path <- paste("/Users/adams/Projects/300K/2022-library-run/metadata/", pool, "-meta.txt", sep="")
-meta_path <- paste("/Users/adams/Projects/300K/2022-library-run/metadata/", pool, ".txt", sep="")
-full_meta_map_path <- "/Users/adams/Projects/300K/2022-library-run/metadata/full-meta-map.txt"
-full_pool_sequence_path <- "/Users/adams/Projects/300K/2022-library-run/metadata/full-pool-sequence.txt"
+base <- "/Users/adams/Projects/300K/2022-library-run/Metadata/"
+pool_name_output_path <- paste(base, "poolnames/", pool, "_names.txt", sep = "")
+meta_output_path <- paste(base, pool, "-meta.txt", sep = "")
+meta_path <- paste(base, pool, ".txt", sep = "")
+full_meta_map_path <- "full-meta-map.txt"
+full_pool_sequence_path <- "full-pool-sequence.txt"
 
 tbl_meta <- fread(meta_path) %>% as_tibble()
 tbl_pool_names <- tbl_meta %>% select(`Pool name`) %>% unique()
@@ -82,3 +83,26 @@ tbl_folder_meta_map <- merge(tbl_folder_map, tbl_meta, by = "pool_name") %>%
     distinct()
 
 fwrite(tbl_folder_meta_map, full_meta_map_path, col.names = TRUE, sep = "\t")
+
+
+# -------------------------------- TRYPTIC ------------------------------------
+
+base <- "/Users/adams/Projects/300K/Tryptic/Metadata/"
+full_meta_map_path <-  paste(base, "full-meta-map.txt", sep = "")
+meta_path <- paste(base, "full-pool-sequence.txt", sep = "")
+
+tbl_meta <- fread(meta_path) %>% as_tibble()
+tbl_meta_length <- tbl_meta %>% mutate(length = str_count(Sequence))
+
+tbl_meta_minmax <- tbl_meta_length %>%
+    filter(QC_type == "") %>%
+    group_by(pool_name) %>%
+    mutate(min_length = min(length), max_length = max(length)) %>%
+    ungroup() %>%
+    mutate(plate = "first_pool") %>%
+    select(max_length, plate, pool_name) %>%
+    distinct()
+
+tbl_meta_minmax %>% count(max_length)
+
+fwrite(tbl_meta_minmax, full_meta_map_path, col.names = TRUE, sep = "\t")
