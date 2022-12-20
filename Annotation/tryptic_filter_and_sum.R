@@ -66,48 +66,15 @@ tbl_annotation <- tbl_mapped_precursor %>%
     rename_with(toupper) %>%
     # Group by scan numbers instead of precursor
     group_by(SCAN_NUMBER) %>%
-    mutate(mean_CE = mean(COLLISION_ENERGY)) %>%
-    mutate(min_CE = min(COLLISION_ENERGY)) %>%
-    mutate(max_CE = max(COLLISION_ENERGY)) %>%
+    mutate(median_CE = median(COLLISION_ENERGY)) %>%
     mutate(combined_INTENSITIES = paste0(INTENSITIES, collapse = ";")) %>%
     mutate(combined_MZ = paste0(MZ, collapse = ";")) %>%
     mutate(RETENTION_TIME = median(RETENTION_TIME)) %>%
     ungroup() %>%
     select(RAW_FILE, SCAN_NUMBER, MODIFIED_SEQUENCE, CHARGE, FRAGMENTATION,
     MASS_ANALYZER, SCAN_EVENT_NUMBER, MASS, SCORE, REVERSE, RETENTION_TIME,
-    combined_MZ, combined_INTENSITIES, mean_CE) %>%
+    combined_MZ, combined_INTENSITIES, median_CE) %>%
     distinct()
 
 output_path <- paste(base_path, "Annotation/scan-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_annotation, output_path)
-
-tbl_mapped_precursor %>%
-    merge(tbl_filtered_psms,
-        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
-    as_tibble() %>%
-    filter(Score >= 70) %>%
-    select(Scan_number, collision_energy, Precursor, retention_time) %>%
-    distinct() %>%
-    count(Scan_number) %>%
-    # arrange(desc(n))
-    count(n) %>%
-    arrange(nn) %>%
-    print(n = 30)
-
-tbl_scan_ce_rt <- tbl_mapped_precursor %>%
-    merge(tbl_filtered_psms,
-        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
-    as_tibble() %>%
-    filter(Score >= 70) %>%
-    select(Scan_number, collision_energy, Precursor, retention_time) %>%
-    distinct() %>%
-    filter(Scan_number == 2185)
-
-ggplot(tbl_scan_ce_rt, aes(x = collision_energy)) +
-    geom_histogram(binwidth = 0.1) +
-    ggtitle("Scan_number == 2185") +
-    theme_minimal()
-ggplot(tbl_scan_ce_rt, aes(x = retention_time)) +
-    geom_histogram(binwidth = 1) +
-    ggtitle("Scan_number == 2185") +
-    theme_minimal()
