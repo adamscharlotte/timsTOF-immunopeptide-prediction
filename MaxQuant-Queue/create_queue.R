@@ -17,10 +17,11 @@ tbl_queue <- tbl_full_meta_map %>%
     fasta_file = paste(base, path, "TUM-fasta\\\\",
         pool_name, ".fasta", sep = ""),
     raw_folder = paste(base, "Analysis\\\\", pool_name,
-        "\\\\TIMS-30min-R1-TIMS_semitryptic\\\\230719_f1-",
-        pool_name, "_TIMS-30min-R1.d", sep = ""),
+        "_01_01\\\\TIMS-30min-R1-TIMS_semitryptic\\\\230719_f1-",
+        pool_name, "_01_01-TIMS-30min-R1.d", sep = ""),
     base_mqpar = "mqpar-tryptic.xml",
-    output_folder = paste(base, path, "Searches\\\\", pool_name, sep = "")) %>%
+    output_folder = paste(base, path, "TUM-Searches\\\\",
+        pool_name, sep = "")) %>%
     mutate(max_length_qc = ifelse(max_length < min_max_length,
         min_max_length, max_length)) %>%
     select(pool, MQ_version, pre_payload, post_payload, threads, plate,
