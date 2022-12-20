@@ -4,21 +4,13 @@ import pandas as pd
 import numpy as np
 import os
 
-from fundamentals import constants
-from fundamentals.fragments import initialize_peaks
-from fundamentals.annotation.annotation import annotate_spectra
-from fundamentals.mod_string import maxquant_to_internal, internal_without_mods
-import h5py
-import argparse, pathlib
-from fundamentals.mod_string import parse_modstrings, maxquant_to_internal
-from fundamentals.constants import ALPHABET
-from mgf_filter.util import timeStamped
-from mgf_filter.masterSpectrum import MasterSpectrum
-
-def int_to_onehot(charge):
-    precursor_charge = np.full((6), False)
-    precursor_charge[charge-1] = True
-    return precursor_charge
+# from fundamentals import constants
+# from fundamentals.fragments import initialize_peaks
+# from fundamentals.annotation.annotation import annotate_spectra
+# from fundamentals.mod_string import maxquant_to_internal, internal_without_mods
+# import argparse, pathlib
+# from fundamentals.mod_string import parse_modstrings, maxquant_to_internal
+# from fundamentals.constants import ALPHABET
 
 parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
@@ -35,6 +27,6 @@ map_df = pd.read_csv(map_path)
 
 calibrated_annot_df = pd.read_csv(calibrated_path)
 calibrated_annot_df = calibrated_annot_df.rename({"SEQUENCE": "OBS_SEQUENCE", "MODIFIED_SEQUENCE": "OBS_MODIFIED_SEQUENCE", "SEQUENCE_INT": "OBS_SEQUENCE_INT"}, axis='columns')
-calibrated_annot_df_merged = pd.merge(left=calibrated_annot_df, right=map_df, how='left', left_on='OBS_SEQUENCE', right_on='OBS_SEQUENCE')
+calibrated_annot_df_merged = pd.merge(left=calibrated_annot_df, right=map_df, how='left', left_on='SCAN_NUMBER', right_on='SCAN_NUMBER')
 
 calibrated_annot_df_merged.to_csv(file_path)
