@@ -24,9 +24,10 @@ tbl_mapped_precursor <- fread(mapped_precursor_path) %>%
 tbl_pool_peptides <- fread(meta_path) %>%
     as_tibble() %>%
     filter(pool_name == pool) %>%
+    mutate(trunc_sequence = str_sub(Sequence, start = -7)) %>%
     dplyr::rename(Proteins = pool_name) %>%
-    distinct() %>%
-    select(Proteins, Sequence)
+    select(Proteins, Sequence) %>%
+    distinct()
 
 tbl_qc_peptides <- fread(meta_qc_path) %>%
     as_tibble() %>%
@@ -35,37 +36,78 @@ tbl_qc_peptides <- fread(meta_qc_path) %>%
 tbl_peptides <- rbind(tbl_pool_peptides, tbl_qc_peptides)
 
 tbl_psms <- tbl_mapped_precursor %>%
-    merge(tbl_peptides, by = "Proteins") %>%
-    as_tibble()
-
-tbl_mapped_precursor %>%
-    filter(obs_sequence %in% tbl_peptides$Sequence)
-
-tbl_filtered_psms <- tbl_psms %>%
-    filter(stringr::str_ends(obs_sequence, trunc_sequence)) %>%
-    select(Proteins, Scan_number, frame, Precursor, obs_sequence) %>%
+    select(Scan_number, Proteins, obs_sequence) %>%
     distinct()
 
-tbl_filtered_precursors <- tbl_filtered_psms %>%
-    select(Precursor, frame, obs_sequence) %>%
-    distinct() %>%
-    add_count(Precursor, frame) %>%
-    filter(n == 1)
+tbl_merged <- tbl_psms %>%
+    merge(tbl_peptides) %>%
+    as_tibble()
+
+tbl_filtered_psms <- tbl_merged %>%
+    filter(endsWith(obs_sequence, Sequence)) %>%
+    filter(str_length(obs_sequence) <= str_length(Sequence)) %>%
+    group_by(obs_sequence) %>%
+    filter(str_length(Sequence) == min(str_length(Sequence))) %>%
+    ungroup()
+
+if (!nrow(tbl_filtered_psms %>%
+    group_by(Scan_number) %>%
+    filter(n() == 1) %>%
+    ungroup()
+    ) ==
+    nrow(tbl_filtered_psms)) warning(
+    "Some scans are present multiple times. This can cause duplicates.")
 
 tbl_annotation <- tbl_mapped_precursor %>%
-    filter(obs_sequence %in% tbl_filtered_precursors$obs_sequence &
-        Precursor %in% tbl_filtered_precursors$Precursor) %>%
+    merge(tbl_filtered_psms,
+        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
+    as_tibble() %>%
     filter(Score >= 70) %>%
     rename_with(toupper) %>%
-    group_by(PRECURSOR) %>%
+    # Group by scan numbers instead of precursor
+    group_by(SCAN_NUMBER) %>%
+    mutate(mean_CE = mean(COLLISION_ENERGY)) %>%
+    mutate(min_CE = min(COLLISION_ENERGY)) %>%
+    mutate(max_CE = max(COLLISION_ENERGY)) %>%
     mutate(combined_INTENSITIES = paste0(INTENSITIES, collapse = ";")) %>%
     mutate(combined_MZ = paste0(MZ, collapse = ";")) %>%
     mutate(RETENTION_TIME = median(RETENTION_TIME)) %>%
     ungroup() %>%
     select(RAW_FILE, SCAN_NUMBER, MODIFIED_SEQUENCE, CHARGE, FRAGMENTATION,
     MASS_ANALYZER, SCAN_EVENT_NUMBER, MASS, SCORE, REVERSE, RETENTION_TIME,
-    combined_MZ, combined_INTENSITIES, COLLISION_ENERGY, PRECURSOR) %>%
+    combined_MZ, combined_INTENSITIES, mean_CE) %>%
     distinct()
 
-output_path <- paste(base_path, "Annotation/precursor-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
+output_path <- paste(base_path, "Annotation/scan-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_annotation, output_path)
+
+tbl_mapped_precursor %>%
+    merge(tbl_filtered_psms,
+        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
+    as_tibble() %>%
+    filter(Score >= 70) %>%
+    select(Scan_number, collision_energy, Precursor, retention_time) %>%
+    distinct() %>%
+    count(Scan_number) %>%
+    # arrange(desc(n))
+    count(n) %>%
+    arrange(nn) %>%
+    print(n = 30)
+
+tbl_scan_ce_rt <- tbl_mapped_precursor %>%
+    merge(tbl_filtered_psms,
+        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
+    as_tibble() %>%
+    filter(Score >= 70) %>%
+    select(Scan_number, collision_energy, Precursor, retention_time) %>%
+    distinct() %>%
+    filter(Scan_number == 2185)
+
+ggplot(tbl_scan_ce_rt, aes(x = collision_energy)) +
+    geom_histogram(binwidth = 0.1) +
+    ggtitle("Scan_number == 2185") +
+    theme_minimal()
+ggplot(tbl_scan_ce_rt, aes(x = retention_time)) +
+    geom_histogram(binwidth = 1) +
+    ggtitle("Scan_number == 2185") +
+    theme_minimal()
