@@ -9,7 +9,7 @@ pool <- args[1]
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
-mapped_precursor_path <- paste(base_path, "Annotation/precursor-mapped/", pool, ".csv", sep = "")  # nolint
+mapped_precursor_path <- paste(base_path, "Annotation/extract-d/", pool, ".csv", sep = "")  # nolint
 
 spaceless <- function(x) {
     colnames(x) <- gsub(" ", "_", colnames(x))
