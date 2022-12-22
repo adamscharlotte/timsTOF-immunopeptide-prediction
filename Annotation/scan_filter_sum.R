@@ -1,5 +1,3 @@
-# ssh cadams@10.152.135.57
-
 library(tidyverse)
 library(data.table)
 
@@ -11,7 +9,6 @@ pool <- args[1]
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
-txt_output_path <- paste(base_path, "Metadata/info-sum.txt", sep = "")
 mapped_precursor_path <- paste(base_path, "Annotation/precursor-mapped/", pool, ".csv", sep = "")  # nolint
 
 spaceless <- function(x) {
@@ -29,11 +26,12 @@ tbl_mapped_precursor <- fread(mapped_precursor_path) %>%
 tbl_pool_peptides <- fread(meta_path) %>%
     as_tibble() %>%
     filter(pool_name == pool) %>%
-    mutate(trunc_sequence = str_sub(Sequence, start = -7)) %>%
     dplyr::rename(Proteins = pool_name) %>%
     distinct()
 
-tbl_qc_peptides <- fread(meta_qc_path) %>% as_tibble()
+tbl_qc_peptides <- fread(meta_qc_path) %>%
+    as_tibble() %>%
+    select(Proteins, Sequence)
 
 tbl_peptides <- rbind(tbl_pool_peptides, tbl_qc_peptides)
 
@@ -42,24 +40,37 @@ tbl_psms <- tbl_mapped_precursor %>%
     as_tibble()
 
 tbl_filtered_psms <- tbl_psms %>%
-    filter(stringr::str_ends(obs_sequence, trunc_sequence)) %>%
-    select(Proteins, Scan_number, frame, Precursor, obs_sequence) %>%
-    distinct()
+    filter(endsWith(obs_sequence, Sequence)) %>%
+    filter(str_length(obs_sequence) <= str_length(Sequence)) %>%
+    group_by(obs_sequence) %>%
+    filter(str_length(Sequence) == min(str_length(Sequence))) %>%
+    ungroup()
+
+if (!nrow(tbl_filtered_psms %>%
+    group_by(Scan_number) %>%
+    filter(n() == 1) %>%
+    ungroup()
+    ) ==
+    nrow(tbl_filtered_psms)) warning(
+    "Some scans are present multiple times. This can cause duplicates.")
 
 tbl_annotation <- tbl_mapped_precursor %>%
+    merge(tbl_filtered_psms,
+        by = c("Proteins", "Scan_number", "obs_sequence")) %>%
+    as_tibble() %>%
     filter(Score >= 70) %>%
     rename_with(toupper) %>%
     # Group by scan numbers instead of precursor
     group_by(SCAN_NUMBER) %>%
-    mutate(mean_CE = mean(COLLISION_ENERGY)) %>%
+    mutate(median_CE = median(COLLISION_ENERGY)) %>%
     mutate(combined_INTENSITIES = paste0(INTENSITIES, collapse = ";")) %>%
     mutate(combined_MZ = paste0(MZ, collapse = ";")) %>%
     mutate(RETENTION_TIME = median(RETENTION_TIME)) %>%
     ungroup() %>%
     select(RAW_FILE, SCAN_NUMBER, MODIFIED_SEQUENCE, CHARGE, FRAGMENTATION,
     MASS_ANALYZER, SCAN_EVENT_NUMBER, MASS, SCORE, REVERSE, RETENTION_TIME,
-    combined_MZ, combined_INTENSITIES, mean_CE) %>%
+    combined_MZ, combined_INTENSITIES, median_CE, OBS_SEQUENCE, SEQUENCE) %>%
     distinct()
 
-output_path <- paste(base_path, "Annotation/scan-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
+output_path <- paste(base_path, "Annotation/scan-consensus/filtered/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_annotation, output_path)
