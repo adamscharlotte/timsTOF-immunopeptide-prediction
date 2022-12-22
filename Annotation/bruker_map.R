@@ -23,14 +23,31 @@ if (accept_Bruker_EULA_and_on_Windows_or_Linux) {
 args <- commandArgs(trailingOnly = TRUE)
 raw_path <- args[1]
 output_path <- args[2]
-frame_min <- args[3]
-frame_max <- args[4]
+pasef_path <- args[3]
+
+tbl_pasef <- read.csv(pasef_path) %>%
+    as_tibble() %>%
+    mutate(frame = Frame)
 
 df_tims <- TimsR(raw_path) # get data handle
-df_raw <- df_tims[frame_min : frame_max, all_columns]
+df_raw <- df_tims[tbl_pasef$frame, all_columns]
 
 tbl_raw <- df_raw %>%
     as_tibble() %>%
     distinct()
 
-fwrite(tbl_raw, output_path)
+tbl_raw_pasef <- merge(tbl_raw, tbl_pasef, by = "frame") %>% as_tibble()
+
+tbl_raw_group <- tbl_raw_pasef %>%
+    filter(ScanNumBegin <= scan & scan <= ScanNumEnd) %>%
+    distinct() %>%
+    group_by(Precursor) %>%
+    arrange(mz) %>%
+    mutate(intensities = paste(intensity, collapse = ";")) %>%
+    mutate(mz = paste(mz, collapse = ";")) %>%
+    ungroup() %>%
+    select(Precursor, frame, intensities, mz, retention_time,
+        collision_energy, inv_ion_mobility) %>%
+    distinct()
+
+fwrite(tbl_raw_group, output_path)
