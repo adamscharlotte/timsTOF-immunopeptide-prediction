@@ -47,7 +47,7 @@ tbl_raw_group <- tbl_raw_pasef %>%
     mutate(mz = paste(mz, collapse = ";")) %>%
     ungroup() %>%
     select(Precursor, frame, intensities, mz, retention_time,
-        collision_energy, inv_ion_mobility) %>%
+        CollisionEnergy, inv_ion_mobility) %>%
     distinct()
 
 fwrite(tbl_raw_group, output_path)
