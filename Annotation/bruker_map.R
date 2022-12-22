@@ -41,7 +41,7 @@ tbl_raw_pasef <- merge(tbl_raw, tbl_pasef, by = "frame") %>% as_tibble()
 tbl_raw_group <- tbl_raw_pasef %>%
     filter(ScanNumBegin <= scan & scan <= ScanNumEnd) %>%
     distinct() %>%
-    group_by(Precursor) %>%
+    group_by(Precursor, frame) %>%
     arrange(mz) %>%
     mutate(intensities = paste(intensity, collapse = ";")) %>%
     mutate(mz = paste(mz, collapse = ";")) %>%
