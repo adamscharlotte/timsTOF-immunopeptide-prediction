@@ -2,7 +2,7 @@ library(tidyverse)
 library(data.table)
 args <- commandArgs(trailingOnly = TRUE)
 pool <- args[1]
-pool <- "TUM_first_pool_2"
+# pool <- "TUM_first_pool_2"
 
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/tryptic-pool-sequence.txt", sep = "")
@@ -73,8 +73,11 @@ tbl_annotation <- tbl_mapped_precursor %>%
     ungroup() %>%
     select(RAW_FILE, SCAN_NUMBER, MODIFIED_SEQUENCE, CHARGE, FRAGMENTATION,
     MASS_ANALYZER, SCAN_EVENT_NUMBER, MASS, SCORE, REVERSE, RETENTION_TIME,
-    combined_MZ, combined_INTENSITIES, median_CE) %>%
+    combined_MZ, combined_INTENSITIES, median_CE, OBS_SEQUENCE, SEQUENCE) %>%
     distinct()
 
 output_path <- paste(base_path, "Annotation/scan-consensus/un-annotated/", pool, ".csv", sep = "") # nolint
 fwrite(tbl_annotation, output_path)
+
+tbl_annotation %>%
+    filter(OBS_SEQUENCE == SEQUENCE)
