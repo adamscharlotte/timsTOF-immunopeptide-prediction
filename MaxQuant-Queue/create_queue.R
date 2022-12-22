@@ -6,7 +6,7 @@ path <- "External_data\\\\Bruker\\\\UA-TimsTOF-300K\\\\"
 local_path <- "/Users/adams/Projects/300K/Tryptic/"
 # local_path <- "/Users/adams/Projects/300K/2022-library-run/"
 full_meta_map_path <- paste(local_path, "Metadata/full-meta-map.txt", sep = "")
-queue_path <- paste(local_path, "MaxQuant/Queue/queue.csv", sep = "")
+queue_path <- paste(local_path, "MaxQuant/Queue/queue-unsp.csv", sep = "")
 min_max_length <- 11
 tbl_full_meta_map <- fread(full_meta_map_path) %>% as_tibble
 
@@ -19,8 +19,8 @@ tbl_queue <- tbl_full_meta_map %>%
     raw_folder = paste(base, "Analysis\\\\", pool_name,
         "_01_01\\\\TIMS-30min-R1-TIMS_semitryptic\\\\230719_f1-",
         pool_name, "_01_01-TIMS-30min-R1.d", sep = ""),
-    base_mqpar = "mqpar-tryptic.xml",
-    output_folder = paste(base, path, "TUM-Searches\\\\",
+    base_mqpar = "mqpar-unspecific.xml",
+    output_folder = paste(base, path, "TUM-Searches\\\\first_pool\\\\",
         pool_name, sep = "")) %>%
     mutate(max_length_qc = ifelse(max_length < min_max_length,
         min_max_length, max_length)) %>%
