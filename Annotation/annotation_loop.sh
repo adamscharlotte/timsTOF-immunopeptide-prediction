@@ -4,7 +4,7 @@ ssh cadams@10.152.135.57
 
 grep -vxFf mapped_done.txt all-pool-names.txt > map_queue.txt
 grep -vxFf cali_done.txt all-pool-names.txt > annot_queue.txt
-scp Annotation/bruker_map.py cadams@10.152.135.57:/home/cadams
+scp Annotation/extract_pasef.py cadams@10.152.135.57:/home/cadams
 scp Names/tryptic_pool_names.txt cadams@10.152.135.57:/home/cadams
 
 # screen -S annotate
@@ -27,7 +27,7 @@ lines=`tail -n+1 $name_file`
 for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
-    /home/cadams/anaconda3/envs/prosit-annotate/bin/python3 bruker_map.py "${array[0]}"
+    /home/cadams/anaconda3/envs/prosit-annotate/bin/python3 extract_pasef.py "${array[0]}"
 done
 
 # name_file=/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/pool-path-frames.txt
@@ -36,7 +36,7 @@ lines=`tail -n+1 $name_file`
 for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
-    Rscript bruker_map.R ${array[1]} "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/extract-d/${array[0]}.csv" ${array[2]} ${array[3]}
+    Rscript bruker_map.R ${array[1]} "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/extract-d/${array[0]}.csv"
 done
 
 # -------------------------------------- FILTER DATA ----------------------------------------
