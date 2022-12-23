@@ -4,11 +4,11 @@ ssh cadams@10.152.135.57
 
 grep -vxFf mapped_done.txt all-pool-names.txt > map_queue.txt
 grep -vxFf cali_done.txt all-pool-names.txt > annot_queue.txt
-scp Annotation/bruker_map.R cadams@10.152.135.57:/home/cadams
-scp Names/tryptic_pool_names.txt cadams@10.152.135.57:/home/cadams
+scp Annotation/extract_psm.R cadams@10.152.135.57:/home/cadams
+scp Names/test.txt cadams@10.152.135.57:/home/cadams
 
 # screen -S annotate
-screen -r annotate
+creen -r annotate
 
 # name_file=map_queue.txt
 name_file=test.txt
@@ -37,6 +37,16 @@ for line in $lines
 do
     IFS=';' read -r -a array <<< "$line"
     Rscript bruker_map.R ${array[1]} "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/extract-d/${array[0]}.csv" "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/extract-pasef/${array[0]}.csv"
+done
+
+screen -r extract_psm
+
+name_file=test.txt
+lines=`tail -n+1 $name_file`
+for line in $lines
+do
+    IFS=';' read -r -a array <<< "$line"
+    Rscript extract_psm.R "${array[0]}"
 done
 
 # -------------------------------------- FILTER DATA ----------------------------------------
