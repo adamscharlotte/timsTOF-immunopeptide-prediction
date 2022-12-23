@@ -3,9 +3,9 @@
 library(tidyverse)
 library(data.table)
 
-# args <- commandArgs(trailingOnly = TRUE)
-# pool <- args[1]
-pool <- "TUM_first_pool_5"
+args <- commandArgs(trailingOnly = TRUE)
+pool <- args[1]
+# pool <- "TUM_first_pool_5"
 
 base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 txt_path <- paste(base_path, "TUM-Searches/first_pool-unsp/", pool, "/combined/txt/", sep = "") # nolint
