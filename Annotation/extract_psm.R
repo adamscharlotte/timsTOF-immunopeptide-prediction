@@ -33,6 +33,7 @@ tbl_d_extract <- fread(extract_path) %>% as_tibble()
 tbl_msms_raw <- tbl_msms_precursor %>%
     select(-c(Intensities)) %>%
     merge(tbl_d_extract, by = "Precursor") %>%
+    rename(collision_energy = CollisionEnergy) %>%
     as_tibble()
 
 output_path <- paste(base_path, "Annotation/extract-psm/", pool, ".csv", sep = "") # nolint
