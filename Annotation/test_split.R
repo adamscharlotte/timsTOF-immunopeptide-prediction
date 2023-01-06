@@ -1,4 +1,5 @@
 library(tidyverse)
+library(data.table)
 
 base <- "/Users/adams/Projects/300K/2022-library-run/Metadata/"
 meta_path <- paste(base, "full-pool-sequence.txt", sep = "")
