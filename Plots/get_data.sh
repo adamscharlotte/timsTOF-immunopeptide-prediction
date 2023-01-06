@@ -5,12 +5,12 @@ cd /media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/Externa
 
 mkdir accumulatedMsmsScans
 
-name_file=pool_names.txt
+name_file=/home/cadams/tryptic_pool_names.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
     IFS=',' read -r -a array <<< "$line"
-    cp ${array[0]}/combined/txt/accumulatedMsmsScans.txt accumulatedMsmsScans/"${array[0]}".txt
+    cp first_pool-unsp/${array[0]}/combined/txt/accumulatedMsmsScans.txt accumulatedMsmsScans-unsp/"${array[0]}".txt
 done
 
 scp cadams@10.152.135.57:/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Searches/accumulatedMsmsScans/*.txt .
