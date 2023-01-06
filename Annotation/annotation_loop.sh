@@ -5,7 +5,7 @@ ssh cadams@10.152.135.57
 grep -vxFf mapped_done.txt all-pool-names.txt > map_queue.txt
 grep -vxFf cali_done.txt all-pool-names.txt > annot_queue.txt
 scp Annotation/extract_d.R cadams@10.152.135.57:/home/cadams
-scp Names/test.txt cadams@10.152.135.57:/home/cadams
+scp Names/test-2.txt cadams@10.152.135.57:/home/cadams
 
 # screen -S annotate
 creen -r annotate
@@ -33,7 +33,7 @@ done
 /home/cadams/anaconda3/envs/prosit-annotate/bin/python3 extract_pasef.py "TUM_first_pool_22"
 
 # name_file=/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/pool-path-frames.txt
-name_file=test-1.txt
+name_file=test-2.txt
 lines=`tail -n+1 $name_file`
 for line in $lines
 do
