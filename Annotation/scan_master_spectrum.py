@@ -18,13 +18,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
 args = parser.parse_args()
 
-# pool = "TUM_HLA2_12"
+# pool = "TUM_first_pool_5"
 pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-un_annot_path = base_path + "scan-consensus/un-annotated/" + pool + ".csv"
-sum_path = base_path + "scan-consensus/summed-40-ppm/" + pool + ".csv"
-# annot_path = base_path + "precursor-consensus/annotated-20-ppm/" + pool + ".csv"
+un_annot_path = base_path + "total-scan-consensus/filtered/" + pool + ".csv"
+sum_path = base_path + "total-scan-consensus/summed-40-ppm/" + pool + ".csv"
 
 un_annot_df = pd.read_csv(un_annot_path)
 un_annot_df["combined_INTENSITIES"]
@@ -82,6 +81,8 @@ un_annot_df_combined["MZ"] = [';'.join(map(str, l)) for l in un_annot_df_combine
 un_annot_df_combined["INTENSITIES"] = [';'.join(map(str, l)) for l in un_annot_df_combined['INTENSITIES']]
 
 un_annot_df_combined.to_csv(sum_path)
+
+print("Are spectra lost?", len(un_annot_df.index) > len(un_annot_df_combined.index))
 
 # full_df["MZ"] = [';'.join(map(str, l)) for l in full_df['MZ']]
 # full_df["INTENSITIES"] = [';'.join(map(str, l)) for l in full_df['INTENSITIES']]
