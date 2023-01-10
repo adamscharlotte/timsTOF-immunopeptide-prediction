@@ -9,12 +9,10 @@ from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
 from fundamentals.annotation.annotation import annotate_spectra
 from fundamentals.mod_string import maxquant_to_internal, internal_without_mods
-import h5py
 import argparse, pathlib
 from fundamentals.mod_string import parse_modstrings, maxquant_to_internal
 from fundamentals.constants import ALPHABET
 from mgf_filter.util import timeStamped
-from mgf_filter.masterSpectrum import MasterSpectrum
 
 parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
