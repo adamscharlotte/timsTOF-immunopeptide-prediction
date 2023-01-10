@@ -20,12 +20,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
 args = parser.parse_args()
 
-# pool = "TUM_HLA2_88"
+# pool = "TUM_first_pool_5"
 pool = args.pool
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
-sum_path = base_path + "scan-consensus/summed-40-ppm/" + pool + ".csv"
-annot_path = base_path + "scan-consensus/annotated-40-ppm/" + pool + ".csv"
+sum_path = base_path + "total-scan-consensus/summed-40-ppm/" + pool + ".csv"
+annot_path = base_path + "total-scan-consensus/annotated-40-ppm/" + pool + ".csv"
 
 un_annot_df_combined = pd.read_csv(sum_path)
 
@@ -46,5 +46,7 @@ full_df = pd.concat([un_annot_df_combined.drop(columns = ["INTENSITIES", "MZ"]),
 full_df["MZ"] = [';'.join(map(str, l)) for l in full_df['MZ']]
 full_df["INTENSITIES"] = [';'.join(map(str, l)) for l in full_df['INTENSITIES']]
 full_df.to_csv(annot_path)
+
+print("Are spectra lost?", len(un_annot_df_combined.index) > len(full_df.index))
 
 # full_df[full_df["PRECURSOR"] == 8200][["INTENSITIES", "MZ"]].values
