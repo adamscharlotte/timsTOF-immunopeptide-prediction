@@ -1,17 +1,17 @@
 library(tidyverse)
 library(data.table)
 
-# args <- commandArgs(trailingOnly = TRUE)
-# pool <- args[1]
-pool <- "TUM_first_pool_5"
+args <- commandArgs(trailingOnly = TRUE)
+pool <- args[1]
+# pool <- "TUM_first_pool_5"
 # pool <- "TUM_aspn_11"
 
 # base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
-mapped_precursor_path <- paste(base_path, "Annotation/extract-psm/", pool, ".csv", sep = "")  # nolint
-# mapped_precursor_path <- paste(base_path, "Annotation/precursor-mapped/", pool, ".csv", sep = "")  # nolint
+# mapped_precursor_path <- paste(base_path, "Annotation/extract-psm/", pool, ".csv", sep = "")  # nolint
+mapped_precursor_path <- paste(base_path, "Annotation/precursor-mapped/", pool, ".csv", sep = "")  # nolint
 
 spaceless <- function(x) {
     colnames(x) <- gsub(" ", "_", colnames(x))
