@@ -4,7 +4,7 @@ library(data.table)
 args <- commandArgs(trailingOnly = TRUE)
 pool <- args[1]
 # pool <- "TUM_first_pool_5"
-# pool <- "TUM_aspn_11"
+# pool <- "TUM_HLA2_115"
 
 # base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
 base_path <- "/Users/adams/Projects/300K/2022-library-run/"
@@ -48,7 +48,7 @@ tbl_psms <- tbl_mapped_precursor %>%
     as_tibble()
 
 tbl_filtered_psms <- tbl_psms %>%
-    filter(endsWith(obs_sequence, Sequence)) %>%
+    filter(endsWith(Sequence, obs_sequence)) %>%
     filter(str_length(obs_sequence) <= str_length(Sequence)) %>%
     group_by(obs_sequence) %>%
     filter(str_length(Sequence) == min(str_length(Sequence))) %>%
