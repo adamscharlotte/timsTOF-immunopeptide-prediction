@@ -44,3 +44,11 @@ tbl_meta %>%
     filter(pool_name %in% result$pool_name) %>%
     filter(startsWith(pool_name, "TUM_first_pool")) %>%
     count(pool_name)
+
+result_t <- result$pool_name
+
+write.table(result_t,
+    file = "/Users/adams/Code/timsTOF-immunopeptide-prediction/Names/test-set.txt", # nolint
+    col.names = FALSE,
+    row.names = FALSE,
+    sep = "")
