@@ -6,7 +6,7 @@ spaceless <- function(x) {
     x
     }
 
-path <- "/Users/adams/Projects/300K/2022-library-run/accumulatedMsmsScans"
+path <- "/Users/adams/Projects/300K/2022-library-run/accumulatedMsmsScansTryptic" # nolint
 setwd(path)
 files <- dir(pattern = "*.txt")
 scans_txt <- files %>%
@@ -41,11 +41,13 @@ plot_bar <- ggplot(data = tbl_barplot,
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         # legend.position = "top",
-        legend.position = c(0.3, 0.8)) +
+        # legend.position = c(0.3, 0.8)
+        legend.position = "none"
+        ) +
     xlab("") +
     ylab("#Spectra")
 
-path_plot <- "/Users/adams/Projects/300K/Results/Figures/Identification rate.png" # nolint
+path_plot <- "/Users/adams/Projects/300K/Results/Figures/Identification rate unspecific enzyme run proteotypic peptides.png" # nolint
 ggsave(path_plot, plot_bar, width = 21.5, height = 6, units = "cm")
 
 tbl_identified <- tbl_barplot %>% filter(Identified == "+")
@@ -53,4 +55,9 @@ tbl_identified <- tbl_barplot %>% filter(Identified == "+")
 sum(tbl_identified$total)
 sum(tbl_identified$n)
 
+# tryptic-unsp
+381237 / 3155208
+# tryptic tryptic
+344354 / 2890141
+# non-tryptic
 379709 / 2175627
