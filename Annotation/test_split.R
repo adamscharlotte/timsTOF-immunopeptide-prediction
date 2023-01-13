@@ -130,52 +130,6 @@ tbl_validation %>%
     filter(OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE) %>%
     filter(OBS_SEQUENCE == SEQUENCE)
 
-c_overlap <- function(group1, group2) {
-    tbl_1 <- tbl_meta %>% filter(pool_name == group1)
-    tbl_2 <- tbl_meta %>%
-        filter(pool_name == group2) %>%
-        rename(pool_name2 = pool_name) %>%
-        rename(Sequence2 = Sequence)
-    tbl_overlap <- merge(tbl_1, tbl_2) %>%
-        as_tibble() %>%
-        filter(endsWith(Sequence, Sequence2))
-    return(nrow(tbl_overlap))
-}
-
-tbl_meta_map %>% count(plate)
-hla2_p2 <- tbl_meta_map %>%
-    filter(plate == "20220623_HLAII_p2") %>%
-    select(pool_name)
-
-hla2_p2_compare <- hla2_p2 %>%
-    rename(group1 = pool_name) %>%
-    merge(hla2_p2) %>%
-    as_tibble() %>%
-    filter(!group1 == pool_name)
-
-hla2_p2_overlap <- hla2_p2_compare %>%
-    rowwise() %>%
-    mutate(overlap = c_overlap(group1, pool_name))
-
-hla2_p2_overlap_B <- hla2_p2_compare %>%
-    rowwise() %>%
-    mutate(overlap = c_overlap(pool_name, group1))
-
-hla2_p2_overlap %>% arrange(desc(overlap))
-hla2_p2_overlap_B %>% arrange(desc(overlap))
-
-ggplot(hla2_p2_overlap, aes(group1, pool_name, fill = overlap)) +
-    geom_tile() +
-    scale_fill_viridis(discrete = FALSE) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-hla_p2_both_sides <- hla2_p2_overlap_B %>%
-    rename(pool_name_t = group1) %>%
-    rename(group1 = pool_name) %>%
-    rename(pool_name = pool_name_t) %>%
-    rbind(hla2_p2_overlap) %>%
-    distinct()
-
 8319 + 8287 + 78522
 8319/95128
 8287/95128
@@ -219,3 +173,66 @@ write.table(validation_set_t,
     col.names = FALSE,
     row.names = FALSE,
     sep = "")
+
+# -----------------------------
+
+c_overlap <- function(group1, group2) {
+    tbl_1 <- tbl_meta %>% filter(pool_name == group1)
+    tbl_2 <- tbl_meta %>%
+        filter(pool_name == group2) %>%
+        rename(pool_name2 = pool_name) %>%
+        rename(Sequence2 = Sequence)
+    tbl_overlap <- merge(tbl_1, tbl_2) %>%
+        as_tibble() %>%
+        filter(endsWith(Sequence, Sequence2))
+    return(nrow(tbl_overlap))
+}
+
+tbl_meta_map %>% count(plate)
+hla2_p2 <- tbl_meta_map %>%
+    filter(plate == "20220623_HLAII_p2") %>%
+    select(pool_name)
+
+hla2_p2_compare <- hla2_p2 %>%
+    rename(group1 = pool_name) %>%
+    merge(hla2_p2) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+hla2_p2_overlap <- hla2_p2_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+# hla2_p2_overlap_B <- hla2_p2_compare %>%
+#     rowwise() %>%
+#     mutate(overlap = c_overlap(pool_name, group1))
+
+# hla2_p2_overlap %>% arrange(desc(overlap))
+# hla2_p2_overlap_B %>% arrange(desc(overlap))
+
+ggplot(hla2_p2_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+hla_p2_both_sides <- hla2_p2_overlap_B %>%
+    rename(pool_name_t = group1) %>%
+    rename(group1 = pool_name) %>%
+    rename(pool_name = pool_name_t) %>%
+    rbind(hla2_p2_overlap) %>%
+    distinct()
+
+hla2_p2 <- tbl_meta_map %>%
+    filter(plate == "20220623_HLAII_p2") %>%
+    select(pool_name)
+
+hla2_p2_compare <- hla2_p2 %>%
+    rename(group1 = pool_name) %>%
+    merge(hla2_p2) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+hla2_p2_overlap <- hla2_p2_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
