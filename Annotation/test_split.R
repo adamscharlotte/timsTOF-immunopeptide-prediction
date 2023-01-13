@@ -1,9 +1,10 @@
 library(tidyverse)
 library(data.table)
 
-base <- "/Users/adams/Projects/300K/2022-library-run/Metadata/"
-meta_path <- paste(base, "full-pool-sequence.txt", sep = "")
-map_path <- paste(base, "full-meta-map.txt", sep = "")
+base <- "/Users/adams/Projects/300K/2022-library-run/"
+msms_path <- paste(base, "msms-txtx/", sep = "")
+meta_path <- paste(base, "Metadata/full-pool-sequence.txt", sep = "")
+map_path <- paste(base, "Metadata/full-meta-map.txt", sep = "")
 
 tbl_meta <- fread(meta_path) %>% as_tibble()
 tbl_meta %>%
@@ -30,25 +31,42 @@ tbl_meta_map %>%
 
 set.seed(7)
 
-result <- tbl_meta_map %>%
+test_set <- tbl_meta_map %>%
     add_count(plate) %>%
     mutate(sample_size = n / 10) %>%
     group_by(plate) %>%
     sample_n(sample_size)
 
-result
+test_set %>% count(plate)
 
-result %>% count(plate)
+validation_set <- tbl_meta_map %>%
+    add_count(plate) %>%
+    mutate(sample_size = n / 10) %>%
+    filter(!pool_name %in% test_set$pool_name) %>%
+    group_by(plate) %>%
+    sample_n(sample_size)
 
-tbl_meta %>%
-    filter(pool_name %in% result$pool_name) %>%
-    filter(startsWith(pool_name, "TUM_first_pool")) %>%
-    count(pool_name)
+validation_set %>% count(plate)
 
-result_t <- result$pool_name
+validation_set %>%
+    filter(pool_name %in% test_set$pool_name)
 
-write.table(result_t,
+# -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
+
+
+# -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
+test_set_t <- test_set$pool_name
+
+write.table(test_set_t,
     file = "/Users/adams/Code/timsTOF-immunopeptide-prediction/Names/test-set.txt", # nolint
+    col.names = FALSE,
+    row.names = FALSE,
+    sep = "")
+
+validation_set_t <- validation_set$pool_name
+
+write.table(validation_set_t,
+    file = "/Users/adams/Code/timsTOF-immunopeptide-prediction/Names/validation-set.txt", # nolint
     col.names = FALSE,
     row.names = FALSE,
     sep = "")
