@@ -5,6 +5,7 @@ library(ggplot2)
 # install.packages("hrbrthemes")
 library(hrbrthemes)
 library(viridis)
+library(gtools)
 
 base <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base, "Metadata/full-pool-sequence.txt", sep = "")
@@ -215,24 +216,231 @@ ggplot(hla2_p2_overlap, aes(group1, pool_name, fill = overlap)) +
     scale_fill_viridis(discrete = FALSE) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-hla_p2_both_sides <- hla2_p2_overlap_B %>%
-    rename(pool_name_t = group1) %>%
-    rename(group1 = pool_name) %>%
-    rename(pool_name = pool_name_t) %>%
-    rbind(hla2_p2_overlap) %>%
-    distinct()
 
-hla2_p2 <- tbl_meta_map %>%
-    filter(plate == "20220623_HLAII_p2") %>%
+hla2_p1 <- tbl_meta_map %>%
+    filter(plate == "20220622_HLAII") %>%
     select(pool_name)
 
-hla2_p2_compare <- hla2_p2 %>%
+hla2_p1_compare <- hla2_p1 %>%
     rename(group1 = pool_name) %>%
-    merge(hla2_p2) %>%
+    merge(hla2_p1) %>%
     as_tibble() %>%
     filter(!group1 == pool_name)
 
-hla2_p2_overlap <- hla2_p2_compare %>%
+hla2_p1_overlap <- hla2_p1_compare %>%
     rowwise() %>%
     mutate(overlap = c_overlap(group1, pool_name))
 
+# ------
+
+hla2_p1 <- tbl_meta_map %>%
+    filter(plate == "20220623_HLAII_p2") %>%
+    select(pool_name)
+
+hla2_p1_compare <- hla2_p1 %>%
+    rename(group1 = pool_name) %>%
+    merge(hla2_p1) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+hla2_p1_overlap <- hla2_p1_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+ggplot(hla2_p1_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# ------
+
+aspn_lysn <- tbl_meta_map %>%
+    filter(plate == "20220621_AspNlysN") %>%
+    select(pool_name)
+
+aspn_lysn_compare <- aspn_lysn %>%
+    rename(group1 = pool_name) %>%
+    merge(aspn_lysn) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+aspn_lysn_overlap <- aspn_lysn_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+ggplot(aspn_lysn_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# ------
+hla1_p1 <- tbl_meta_map %>%
+    filter(plate == "20220624_HLAI_1_96") %>%
+    select(pool_name)
+
+hla1_p1_compare <- hla1_p1 %>%
+    rename(group1 = pool_name) %>%
+    merge(hla1_p1) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+hla1_p1_overlap <- hla1_p1_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+ggplot(hla1_p1_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# ------
+hla1_p2 <- tbl_meta_map %>%
+    filter(plate == "20220624_HLAI_97_178") %>%
+    select(pool_name)
+
+hla1_p2_compare <- hla1_p2 %>%
+    rename(group1 = pool_name) %>%
+    merge(hla1_p2) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+hla1_p2_overlap <- hla1_p2_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+ggplot(hla1_p2_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# ------
+first_pool <- tbl_meta_map %>%
+    filter(plate == "first_pool") %>%
+    select(pool_name)
+
+first_pool_compare <- first_pool %>%
+    rename(group1 = pool_name) %>%
+    merge(first_pool) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+
+first_pool_overlap <- first_pool_compare %>%
+    rowwise() %>%
+    mutate(overlap = c_overlap(group1, pool_name))
+
+tbl_first_pool_overlap <- first_pool_overlap %>%
+    mutate(vals_1 = as.numeric(gsub("TUM_first_pool_","", group1))) %>%
+    mutate(vals_2 = as.numeric(gsub("TUM_first_pool_","", pool_name))) %>%
+    arrange(vals_1) %>%
+    arrange(vals_2) %>%
+    print(n = 100)
+
+ggplot(tbl_first_pool_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# ------
+
+output_path <- paste(base, "split-cluster/", sep = "")
+write.csv(first_pool_overlap, paste(output_path, "first_pool_overlap.csv", sep = "")) # nolint
+write.csv(hla1_p2_overlap, paste(output_path, "hla1_p2_overlap.csv", sep = ""))
+write.csv(hla1_p1_overlap, paste(output_path, "hla1_p1_overlap.csv", sep = ""))
+write.csv(hla2_p2_overlap, paste(output_path, "hla2_p2_overlap.csv", sep = ""))
+write.csv(hla2_p1_overlap, paste(output_path, "hla2_p1_overlap.csv", sep = ""))
+write.csv(aspn_lysn_overlap, paste(output_path, "aspn_lysn_overlap.csv", sep = "")) # nolint
+
+standardize <- function(x){(x-min(x))/(max(x)-min(x))}
+
+hla1_p2_overlap$overlap_scale <- scale(hla1_p2_overlap$overlap)
+
+# ------
+
+hla1_p2_overlap
+ggplot(aspn_lysn_overlap, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+write.csv(first_pool_overlap, paste(output_path, "first_pool_overlap.csv", sep = "")) # nolint
+write.csv(hla1_p2_overlap, paste(output_path, "hla1_p2_overlap.csv", sep = ""))
+write.csv(hla1_p1_overlap, paste(output_path, "hla1_p1_overlap.csv", sep = ""))
+write.csv(hla2_p2_overlap, paste(output_path, "hla2_p2_overlap.csv", sep = ""))
+write.csv(hla2_p1_overlap, paste(output_path, "hla2_p1_overlap.csv", sep = ""))
+write.csv(aspn_lysn_overlap, paste(output_path, "aspn_lysn_overlap.csv", sep = "")) # nolint
+
+
+hla1_p1_overlap %>%
+    filter(!overlap == 0) %>%
+    filter(pool_name == "TUM_HLA2_1")
+
+# ------
+
+
+str(hla1_p2_overlap)
+summary(hla1_p2_overlap)
+any(is.na(hla1_p2_overlap))
+hla1_p2_df <- as.data.frame(hla1_p2_overlap)
+hla1_p2_df_sc <- as.data.frame(scale(hla1_p2_df))
+dist_mat <- dist(hla1_p2_df, method = 'euclidean')
+hclust_avg <- hclust(dist_mat, method = 'average')
+plot(hclust_avg)
+hclust_avg <- hclust(dist_mat, method = 'average')
+
+hla1_p2_group <- hla1_p2_overlap %>%
+    mutate(distance = 1 - overlap_norm) %>%
+    select(group1, pool_name, distance) %>%
+    arrange(group1)
+
+hla1_p2_group$distance[hla1_p2_group$distance == 1] <- 2
+
+hla1_p2_t <- hla1_p2_group %>%
+    # group_by(id = group1) %>%
+    # complete(pool_name, fill = list(overlap = 0)) %>%
+    pivot_wider(names_from = pool_name, values_from = distance) %>%
+    select(group1, TUM_HLA_100, everything()) %>%
+    replace(is.na(.), 0) %>%
+    remove_rownames %>%
+    column_to_rownames(var = "group1")
+
+
+d <- as.dist(hla1_p2_t)
+as.matrix(d)[1:5,1:5]
+as.matrix(hla1_p2_t)[1:5,1:5]
+hr <- hclust(d, method = "complete", members = NULL)
+names(hr)
+par(mfrow = c(1, 2)); plot(hr, hang = 0.1); plot(hr, hang = -1)
+plot(as.dendrogram(hr), edgePar=list(col=3, lwd=4), horiz=T)
+
+mycl <- cutree(hr, h=max(hr$height)/2)
+mycl[hr$labels[hr$order]] %>% as_tibble()
+
+colnames(hla1_p2_t)
+hla1_p2_df <- as.data.frame(hla1_p2_overlap)
+rownames(hla1_p2_df) <- hla1_p2_df[,1]
+
+hla1_p2_overlap %>%
+    gather(key = group1, value = overlap, 2:ncol(hla1_p2_overlap)) %>%
+    spread_(key = pool_name, value = 'value')
+
+seeds_df %>% as_tibble()
+set.seed(786)
+file_loc <- 'seeds_dataset.txt'
+seeds_df <- read.csv(file_loc,sep = '\t',header = FALSE)
+
+feature_name <- c('area','perimeter','compactness','length.of.kernel','width.of.kernal','asymmetry.coefficient','length.of.kernel.groove','type.of.seed')
+colnames(seeds_df) <- feature_name
+
+str(seeds_df)
+summary(seeds_df)
+any(is.na(seeds_df))
+
+seeds_label <- seeds_df$type.of.seed
+seeds_df$type.of.seed <- NULL
+str(seeds_df)
+
+seeds_df_sc <- as.data.frame(scale(seeds_df))
+summary(seeds_df_sc)
+
+dist_mat <- dist(seeds_df_sc, method = 'euclidean')
