@@ -1,11 +1,11 @@
 library(tidyverse)
 library(data.table)
 library(readr)
-library(ggplot2)
-# install.packages("hrbrthemes")
-library(hrbrthemes)
-library(viridis)
-library(gtools)
+# library(ggplot2)
+# # install.packages("hrbrthemes")
+# library(hrbrthemes)
+# library(viridis)
+# library(gtools)
 
 base <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base, "Metadata/full-pool-sequence.txt", sep = "")
@@ -105,25 +105,60 @@ nrow(tbl_test)
 nrow(tbl_validation)
 nrow(tbl_train)
 
+# There is overlap between the sets. Even when removing the QC peptides
+
 tbl_test %>% filter(OBS_SEQUENCE %in% tbl_validation$OBS_SEQUENCE)
+
+# Even when retaining only the full length sequences for each pool,
+# There is an overlap between sets.
 
 tbl_test_unique <- tbl_test %>%
     filter(!OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE) %>%
     filter(!OBS_SEQUENCE %in% tbl_validation$OBS_SEQUENCE)
+tbl_test_in_train <- tbl_test %>%
+    filter(OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE & OBS_SEQUENCE == SEQUENCE)
+tbl_test_in_val <- tbl_test %>%
+    filter(OBS_SEQUENCE %in% tbl_validation$OBS_SEQUENCE &
+        OBS_SEQUENCE == SEQUENCE)
+
+tbl_test_peptides <- tbl_test_unique %>%
+    rbind(tbl_test_fl_train, tbl_test_fl_val) %>%
+    distinct()
 
 tbl_validation_unique <- tbl_validation %>%
     filter(!OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE) %>%
     filter(!OBS_SEQUENCE %in% tbl_test$OBS_SEQUENCE)
+tbl_validation_fl_train <- tbl_validation %>%
+    filter(OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE & OBS_SEQUENCE == SEQUENCE)
+tbl_validation_fl_test <- tbl_validation %>%
+    filter(OBS_SEQUENCE %in% tbl_test$OBS_SEQUENCE & OBS_SEQUENCE == SEQUENCE)
 
-tbl_test %>%
-    filter(OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE) %>%
+tbl_validation_peptides <- tbl_validation_unique %>%
+    rbind(tbl_validation_fl_train, tbl_validation_fl_test) %>%
+    distinct()
+
+tbl_validation_peptides %>%
+    filter(OBS_SEQUENCE %in% tbl_test_peptides$OBS_SEQUENCE) %>%
+    filter(OBS_SEQUENCE == SEQUENCE) %>%
+    select(pool_name, OBS_SEQUENCE, SEQUENCE)
+
+tbl_test_peptides %>%
+    filter(OBS_SEQUENCE %in% tbl_validation_peptides$OBS_SEQUENCE) %>%
+    filter(OBS_SEQUENCE == SEQUENCE) %>%
+    select(pool_name, OBS_SEQUENCE, SEQUENCE)
+
+tbl_test_peptides %>%
+    filter(OBS_SEQUENCE == "ALEEYTKKLNTQ") %>%
+    select(pool_name, OBS_SEQUENCE, SEQUENCE)
+
+tbl_train %>%
+    filter(OBS_SEQUENCE %in% tbl_validation_peptides$OBS_SEQUENCE) %>%
     filter(OBS_SEQUENCE == SEQUENCE) %>%
     count(Proteins) %>%
     arrange(desc(n))
 
-tbl_train %>%
-    filter(OBS_SEQUENCE %in% tbl_test$OBS_SEQUENCE) %>%
-    filter(OBS_SEQUENCE == SEQUENCE) %>%
+tbl_validation_peptides %>%
+    filter(OBS_SEQUENCE %in% tbl_train$OBS_SEQUENCE) %>%
     count(Proteins) %>%
     arrange(desc(n))
 
@@ -142,6 +177,7 @@ tbl_validation %>%
 78522/94105
 
 94105/97216
+
 tbl_pool_peptides <- fread(meta_path) %>%
     as_tibble() %>%
     dplyr::rename(Proteins = pool_name) %>%
@@ -158,6 +194,7 @@ tbl_filtered <- tbl_mapped %>%
     ungroup()
 
 colnames(tbl_msms)
+
 # -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
 test_set_t <- test_set$pool_name
 
@@ -176,6 +213,45 @@ write.table(validation_set_t,
     sep = "")
 
 # -----------------------------
+fl_overlap <- function(group1, group2) {
+    tbl_1 <- tbl_meta %>% filter(pool_name == group1)
+    tbl_2 <- tbl_meta %>%
+        filter(pool_name == group2) %>%
+        rename(pool_name2 = pool_name) %>%
+        rename(Sequence2 = Sequence)
+    tbl_overlap <- tbl_1 %>%
+        filter(Sequence %in% tbl_2$Sequence2)
+    return(nrow(tbl_overlap))
+}
+
+tbl_meta_map %>% count(plate)
+tbl_all_pools <- tbl_meta_map %>% select(pool_name)
+tbl_compare <- tbl_all_pools %>%
+    rename(group1 = pool_name) %>%
+    merge(tbl_all_pools) %>%
+    as_tibble() %>%
+    filter(!group1 == pool_name)
+tbl_overlap <- tbl_compare %>%
+    rowwise() %>%
+    mutate(overlap = fl_overlap(group1, pool_name))
+
+tbl_overlap_arr <- tbl_overlap %>%
+    filter(!overlap == 0) %>%
+    arrange(desc(overlap))
+
+tbl_overlap_arr %>%
+    count(group1) %>%
+    arrange(desc(n))
+
+tbl_overlap_arr %>%
+    filter(group1 == "TUM_HLA_40")
+
+
+ggplot(tbl_overlap_arr, aes(group1, pool_name, fill = overlap)) +
+    geom_tile() +
+    scale_fill_viridis(discrete = FALSE) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 
 c_overlap <- function(group1, group2) {
     tbl_1 <- tbl_meta %>% filter(pool_name == group1)
@@ -374,73 +450,3 @@ write.csv(aspn_lysn_overlap, paste(output_path, "aspn_lysn_overlap.csv", sep = "
 hla1_p1_overlap %>%
     filter(!overlap == 0) %>%
     filter(pool_name == "TUM_HLA2_1")
-
-# ------
-
-
-str(hla1_p2_overlap)
-summary(hla1_p2_overlap)
-any(is.na(hla1_p2_overlap))
-hla1_p2_df <- as.data.frame(hla1_p2_overlap)
-hla1_p2_df_sc <- as.data.frame(scale(hla1_p2_df))
-dist_mat <- dist(hla1_p2_df, method = 'euclidean')
-hclust_avg <- hclust(dist_mat, method = 'average')
-plot(hclust_avg)
-hclust_avg <- hclust(dist_mat, method = 'average')
-
-hla1_p2_group <- hla1_p2_overlap %>%
-    mutate(distance = 1 - overlap_norm) %>%
-    select(group1, pool_name, distance) %>%
-    arrange(group1)
-
-hla1_p2_group$distance[hla1_p2_group$distance == 1] <- 2
-
-hla1_p2_t <- hla1_p2_group %>%
-    # group_by(id = group1) %>%
-    # complete(pool_name, fill = list(overlap = 0)) %>%
-    pivot_wider(names_from = pool_name, values_from = distance) %>%
-    select(group1, TUM_HLA_100, everything()) %>%
-    replace(is.na(.), 0) %>%
-    remove_rownames %>%
-    column_to_rownames(var = "group1")
-
-
-d <- as.dist(hla1_p2_t)
-as.matrix(d)[1:5,1:5]
-as.matrix(hla1_p2_t)[1:5,1:5]
-hr <- hclust(d, method = "complete", members = NULL)
-names(hr)
-par(mfrow = c(1, 2)); plot(hr, hang = 0.1); plot(hr, hang = -1)
-plot(as.dendrogram(hr), edgePar=list(col=3, lwd=4), horiz=T)
-
-mycl <- cutree(hr, h=max(hr$height)/2)
-mycl[hr$labels[hr$order]] %>% as_tibble()
-
-colnames(hla1_p2_t)
-hla1_p2_df <- as.data.frame(hla1_p2_overlap)
-rownames(hla1_p2_df) <- hla1_p2_df[,1]
-
-hla1_p2_overlap %>%
-    gather(key = group1, value = overlap, 2:ncol(hla1_p2_overlap)) %>%
-    spread_(key = pool_name, value = 'value')
-
-seeds_df %>% as_tibble()
-set.seed(786)
-file_loc <- 'seeds_dataset.txt'
-seeds_df <- read.csv(file_loc,sep = '\t',header = FALSE)
-
-feature_name <- c('area','perimeter','compactness','length.of.kernel','width.of.kernal','asymmetry.coefficient','length.of.kernel.groove','type.of.seed')
-colnames(seeds_df) <- feature_name
-
-str(seeds_df)
-summary(seeds_df)
-any(is.na(seeds_df))
-
-seeds_label <- seeds_df$type.of.seed
-seeds_df$type.of.seed <- NULL
-str(seeds_df)
-
-seeds_df_sc <- as.data.frame(scale(seeds_df))
-summary(seeds_df_sc)
-
-dist_mat <- dist(seeds_df_sc, method = 'euclidean')
