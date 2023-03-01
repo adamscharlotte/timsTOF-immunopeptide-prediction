@@ -12,7 +12,7 @@ meta_path <- paste(base, "Metadata/full-pool-sequence.txt", sep = "")
 map_path <- paste(base, "Metadata/full-meta-map.txt", sep = "")
 msms_path <- paste(base, "msms-txt/", sep = "")
 # meta_qc_path <- paste(base, "Metadata/qc-peptides.txt", sep = "")
-filter_path <- paste(base, "Annotation/total-scan-consensus/filtered/", sep = "") # nolint
+filter_path <- paste(base, "Annotation/total-scan-consensus/summed-40-ppm/", sep = "") # nolint
 
 tbl_meta <- fread(meta_path) %>% as_tibble()
 tbl_meta %>%
@@ -91,24 +91,72 @@ tbl_filtered_mapped %>% count(Proteins) %>% arrange(desc(n)) #%>% print(n=300)
 
 tbl_test <- tbl_filtered_mapped %>%
     filter(pool_name %in% test_set$pool_name) %>%
-    filter(!is.na(Proteins))
+    filter(!is.na(Proteins)) %>%
+    mutate(set = "test")
 
 tbl_validation <- tbl_filtered_mapped %>%
     filter(pool_name %in% validation_set$pool_name) %>%
-    filter(!is.na(Proteins))
+    filter(!is.na(Proteins)) %>%
+    mutate(set = "validation")
 
 tbl_train <- tbl_filtered_mapped %>%
     filter(!pool_name %in% validation_set$pool_name) %>%
-    filter(!pool_name %in% tbl_test$pool_name)
+    filter(!pool_name %in% tbl_test$pool_name) %>%
+    mutate(set = "train")
 
 nrow(tbl_test)
 nrow(tbl_validation)
 nrow(tbl_train)
 
+all_sets <- bind_rows(tbl_test, tbl_validation, tbl_train)
+
+peptide_counts <- all_sets %>%
+    filter(PRECURSOR_CHARGE < 4) %>%
+    group_by(set) %>%
+    count(OBS_SEQUENCE, name = "count") %>%
+    ungroup()
+
+top_peptides <- peptide_counts %>%
+    group_by(OBS_SEQUENCE) %>%
+    top_n(1, count) %>%
+    ungroup()
+
+peptides_to_keep <- top_peptides %>%
+    add_count(OBS_SEQUENCE, name = "pep_count") %>%
+    filter(pep_count == 1)
+
+tbl_test_filtered <- tbl_test %>%
+    filter(OBS_SEQUENCE %in%
+        peptides_to_keep[peptides_to_keep$set == "test", ]$OBS_SEQUENCE)
+tbl_train_filtered <- tbl_train %>%
+    filter(OBS_SEQUENCE %in%
+        peptides_to_keep[peptides_to_keep$set == "train", ]$OBS_SEQUENCE)
+tbl_validation_filtered <- tbl_validation %>%
+    filter(OBS_SEQUENCE %in%
+        peptides_to_keep[peptides_to_keep$set == "validation", ]$OBS_SEQUENCE)
+
+
+nrow(tbl_test)
+nrow(tbl_validation)
+nrow(tbl_train)
+
+nrow(tbl_test_filtered)
+nrow(tbl_validation_filtered)
+nrow(tbl_train_filtered)
+
+23062 + 25241 + 238466
+23568 + 25803 + 239404
+
+
+
 # There is overlap between the sets. Even when removing the QC peptides
+tbl_remaining <- tbl_test_filtered %>%
+    filter(OBS_SEQUENCE %in% tbl_validation_filtered$OBS_SEQUENCE)
 
-tbl_test %>% filter(OBS_SEQUENCE %in% tbl_validation$OBS_SEQUENCE)
-
+tbl_remaining_counts <- peptide_counts %>%
+    filter(OBS_SEQUENCE %in% tbl_remaining$OBS_SEQUENCE) %>%
+    select(OBS_SEQUENCE, count)
+tbl_remaining_counts %>% print(n = 150)
 # Even when retaining only the full length sequences for each pool,
 # There is an overlap between sets.
 
