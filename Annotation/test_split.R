@@ -108,6 +108,8 @@ nrow(tbl_test)
 nrow(tbl_validation)
 nrow(tbl_train)
 
+24060 + 26297 + 240689
+
 all_sets <- bind_rows(tbl_test, tbl_validation, tbl_train)
 
 peptide_counts <- all_sets %>%
@@ -135,6 +137,25 @@ tbl_validation_filtered <- tbl_validation %>%
     filter(OBS_SEQUENCE %in%
         peptides_to_keep[peptides_to_keep$set == "validation", ]$OBS_SEQUENCE)
 
+all_sets_to_keep <- bind_rows(tbl_test_filtered, tbl_train_filtered, tbl_validation_filtered)
+all_sets_top <- bind_rows(tbl_test_filtered, tbl_train_filtered, tbl_validation_filtered)
+
+nrow(all_sets_to_keep)
+nrow(all_sets_top)
+
+df_diff <- anti_join(all_sets_top, all_sets_to_keep, by = c("SCAN_NUMBER", "pool_name"))
+
+df_diff %>%
+    filter(OBS_SEQUENCE == SEQUENCE) %>%
+    group_by(set) %>%
+    add_count(OBS_SEQUENCE, name = "count") %>%
+    ungroup() %>%
+    group_by(OBS_SEQUENCE) %>%
+    add_count(OBS_SEQUENCE, name = "pep_count") %>%
+    ungroup() %>%
+    filter(pep_count == 1)
+
+    count(pep_count)
 
 nrow(tbl_test)
 nrow(tbl_validation)
@@ -146,6 +167,12 @@ nrow(tbl_train_filtered)
 
 23062 + 25241 + 238466
 23568 + 25803 + 239404
+23717 + 25968 + 239595
+
+# ------------------ WRITE THE SUMMED PEPTIDES FOR EACH SET ------------------
+tbl_filtered %>% select(pool_name)
+
+
 
 # -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
 test_set_t <- test_set$pool_name
