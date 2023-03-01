@@ -137,26 +137,6 @@ tbl_validation_filtered <- tbl_validation %>%
     filter(OBS_SEQUENCE %in%
         peptides_to_keep[peptides_to_keep$set == "validation", ]$OBS_SEQUENCE)
 
-all_sets_to_keep <- bind_rows(tbl_test_filtered, tbl_train_filtered, tbl_validation_filtered)
-all_sets_top <- bind_rows(tbl_test_filtered, tbl_train_filtered, tbl_validation_filtered)
-
-nrow(all_sets_to_keep)
-nrow(all_sets_top)
-
-df_diff <- anti_join(all_sets_top, all_sets_to_keep, by = c("SCAN_NUMBER", "pool_name"))
-
-df_diff %>%
-    filter(OBS_SEQUENCE == SEQUENCE) %>%
-    group_by(set) %>%
-    add_count(OBS_SEQUENCE, name = "count") %>%
-    ungroup() %>%
-    group_by(OBS_SEQUENCE) %>%
-    add_count(OBS_SEQUENCE, name = "pep_count") %>%
-    ungroup() %>%
-    filter(pep_count == 1)
-
-    count(pep_count)
-
 nrow(tbl_test)
 nrow(tbl_validation)
 nrow(tbl_train)
@@ -170,9 +150,13 @@ nrow(tbl_train_filtered)
 23717 + 25968 + 239595
 
 # ------------------ WRITE THE SUMMED PEPTIDES FOR EACH SET ------------------
-tbl_filtered %>% select(pool_name)
+test_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-test.csv", sep = "") # nolint
+train_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-train.csv", sep = "") # nolint
+validation_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-validation.csv", sep = "") # nolint
 
-
+fwrite(tbl_test_filtered, test_path)
+fwrite(tbl_train_filtered, train_path)
+fwrite(tbl_validation_filtered, validation_path)
 
 # -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
 test_set_t <- test_set$pool_name
@@ -190,4 +174,3 @@ write.table(validation_set_t,
     col.names = FALSE,
     row.names = FALSE,
     sep = "")
-
