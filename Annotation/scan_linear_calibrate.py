@@ -7,6 +7,8 @@ import numpy as np
 import os
 
 from sklearn import linear_model
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
 from sqlalchemy import true
 import prosit_grpc
 from prosit_grpc.predictPROSIT import PROSITpredictor
@@ -41,37 +43,21 @@ def get_spectral_angle(intensities):
 # args = parser.parse_args()
 
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
-# annot_path = base_path + "total-scan-consensus/annotated-40-ppm/" + pool + ".csv"
-# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/" + pool + ".csv"
-# ce_sa_path = base_path + "scan-consensus/spectral-angle/" + pool
-training_path = "/home/cadams/train_set.txt"
+validation_path = base_path + "total-scan-consensus/split/annotated-40-ppm-validation.csv"
 
-with open(training_path, "r") as training_files:
-    training_lines = training_files.readlines()
-    training_list = []
-    for l in training_lines:
-        as_list = l.split(", ")
-        training_list.append(base_path + "total-scan-consensus/annotated-40-ppm/" + 
-            as_list[0].replace("\n", "") + ".csv")
+annot_df = pd.read_csv(validation_path)
+annot_df.INTENSITIES = annot_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
+annot_df.MZ = annot_df.MZ.str.split(";").apply(lambda s: [float(x) for x in s])
+annot_df.SEQUENCE_INT = annot_df.SEQUENCE_INT.str.strip("][").str.split(", ").apply(lambda s: [int(x) for x in s])
 
-len(training_list)
-
-# Read CSV files from List
-training_df = pd.concat(map(pd.read_csv,training_list))
-
-full_df = pd.read_csv(annot_path)
-full_df.INTENSITIES = full_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
-full_df.MZ = full_df.MZ.str.split(";").apply(lambda s: [float(x) for x in s])
-full_df.SEQUENCE_INT = full_df.SEQUENCE_INT.str.strip("][").str.split(", ").apply(lambda s: [int(x) for x in s])
-
-full_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
+annot_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
 # full_df.columns
 
 # Filter based on score
 col_filter = ['PRECURSOR_CHARGE']
-full_df[col_filter] = full_df[full_df[col_filter] <= 3][col_filter]
-filtered_annot_df = full_df.dropna()
-print("How many PSMs with charge 4?", len(full_df.index) - len(filtered_annot_df.index))
+annot_df[col_filter] = annot_df[annot_df[col_filter] <= 3][col_filter]
+filtered_annot_df = annot_df.dropna()
+print("How many PSMs with charge 4?", len(annot_df.index) - len(filtered_annot_df.index))
 
 # -----------------------------------------------------------------------------
 
@@ -91,27 +77,63 @@ CE_RANGE = range(5, 45)
 appended_data = []
 
 for charge, df_charge in grouped_charge_df:
-    top_100_df = df_charge.sort_values(['SCORE'], ascending=False).head(100)
-    nrow = len(top_100_df)
-    top_100_df = pd.concat([top_100_df for _ in CE_RANGE], axis=0)
-    top_100_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
-    top_100_df.reset_index(inplace=True)
-predictions = predictor.predict(sequences=top_100_df['MODIFIED_SEQUENCE'].values.tolist(),
-                                charges=top_100_df["PRECURSOR_CHARGE"].values.tolist(),
-                                collision_energies=top_100_df["COLLISION_ENERGY"].values/100.0,
-                                                    models=['Prosit_2020_intensity_hcd'],
-                                                    disable_progress_bar=True)
-top_100_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
-top_100_df["SPECTRAL_ANGLE"] = top_100_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
-top_100_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-    # top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
-groups = top_100_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY", "MASS"])["SPECTRAL_ANGLE"].mean()
+    val_10p = round(len(df_charge)/10)
+    top_10p_df = df_charge.sort_values(['SCORE'], ascending=False).head(val_10p)
+    nrow = len(top_10p_df)
+    top_10p_df = pd.concat([top_10p_df for _ in CE_RANGE], axis=0)
+    top_10p_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
+    top_10p_df.reset_index(inplace=True)
+predictions = predictor.predict(sequences=top_10p_df['MODIFIED_SEQUENCE'].values.tolist(),
+                            charges=top_10p_df["PRECURSOR_CHARGE"].values.tolist(),
+                            collision_energies=top_10p_df["COLLISION_ENERGY"].values/100.0,
+                                                models=['Prosit_2020_intensity_hcd'],
+                                                disable_progress_bar=True)
+top_10p_df['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
+top_10p_df["SPECTRAL_ANGLE"] = top_10p_df[['INTENSITIES','PREDICTED_INTENSITY']].apply(lambda x : get_spectral_angle(x), axis=1)
+top_10p_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+# top_100_df.to_csv(ce_sa_path + '_' + str(charge) + '.csv')
+groups = top_10p_df.groupby(by=['ORIG_COLLISION_ENERGY', "COLLISION_ENERGY", "MASS"])["SPECTRAL_ANGLE"].mean()
 groups_2 = groups.reset_index()
 ids = groups_2.groupby(['ORIG_COLLISION_ENERGY'])['SPECTRAL_ANGLE'].transform(max) == groups_2['SPECTRAL_ANGLE']
 calib_group = groups_2[ids]
 calib_group['delta_collision_energy'] = calib_group['COLLISION_ENERGY'] - calib_group['ORIG_COLLISION_ENERGY']
-linear_model.LinearRegression(calib_group[['MASS','delta_collision_energy']].to_numpy(),
-    fit_intercept=True, copy_X=True, n_jobs=None, positive=False)
+
+# Calculate the lower and upper quartiles
+q1 = calib_group['delta_collision_energy'].quantile(0.25)
+q3 = calib_group['delta_collision_energy'].quantile(0.75)
+iqr = q3 - q1
+
+# Calculate the outlier cutoffs
+lower_cutoff = q1 - 1.5*iqr
+upper_cutoff = q3 + 1.5*iqr
+
+# Filter out the outliers
+calib_group = calib_group[(calib_group['delta_collision_energy'] >= lower_cutoff) & (calib_group['delta_collision_energy'] <= upper_cutoff)]
+
+# Fit a linear model
+X = calib_group[['MASS']] # input feature
+y = calib_group['delta_collision_energy'] # target variable
+model = LinearRegression().fit(X, y)
+new_mass = 1272.6674
+predicted_delta_CE = model.predict([[new_mass]])
+print('Predicted delta_CE for mass', new_mass, 'is', predicted_delta_CE[0])
+# Use the model to predict delta_CE for a range of masses
+min_mass = calib_group['MASS'].min()
+max_mass = calib_group['MASS'].max()
+mass_range = np.linspace(min_mass, max_mass, 100).reshape(-1, 1)
+predicted_delta_CE = model.predict(mass_range)
+
+# Plot the model and data points
+plt.scatter(calib_group['MASS'], calib_group['delta_collision_energy'], label='Data')
+plt.plot(mass_range, predicted_delta_CE, color='red', label='Linear Model')
+plt.xlabel('Mass')
+plt.ylabel('Delta_CE')
+plt.legend()
+plt.show()
+# plt.cla()
+plt.savefig('model_val_no_outlier_filter.png')
+
+
     ce_alignment = calib_group[['delta_collision_energy', 'MASS']]
     df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + best_ce
     appended_data.append(df_charge)
