@@ -42,9 +42,15 @@ def get_spectral_angle(intensities):
     return 1-2*arccos/np.pi
 
 base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
-train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-train.csv"
-ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-train"
-cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-non-tryptic.csv"
+# train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-train.csv"
+# ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-train"
+# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-non-tryptic.csv"
+# train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-train.csv"
+# ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-train"
+# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-tryptic.csv"
+train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
+ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
+cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
 
 annot_df = pd.read_csv(train_path)
 annot_df.INTENSITIES = annot_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -53,6 +59,12 @@ annot_df.SEQUENCE_INT = annot_df.SEQUENCE_INT.str.strip("][").str.split(", ").ap
 
 annot_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
 # full_df.columns
+
+# # Filter for the tryptic peptides
+# annot_df = annot_df.replace(np.nan, '')
+# col_filter = ['PRECURSOR_CHARGE']
+# annot_df[col_filter] = annot_df[annot_df[col_filter] > 1][col_filter]
+# annot_df = annot_df.dropna()
 
 # -----------------------------------------------------------------------------
 
@@ -72,8 +84,9 @@ CE_RANGE = range(5, 45)
 appended_data = []
 
 for charge, df_charge in grouped_charge_df:
-    val_10p = round(len(df_charge)/10)
+    val_10p = round(len(df_charge)/5)
     top_10p_df = df_charge.sort_values(['SCORE'], ascending=False).head(val_10p)
+    top_10p_df = top_10p_df[top_10p_df['OBS_SEQUENCE'].str.len() <= 30]
     nrow = len(top_10p_df)
     top_10p_df = pd.concat([top_10p_df for _ in CE_RANGE], axis=0)
     top_10p_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
@@ -95,33 +108,27 @@ for charge, df_charge in grouped_charge_df:
     # Fit a linear model
     X = calib_group[['MASS']] # input feature
     y = calib_group['delta_collision_energy'] # target variable
-    model = HuberRegressor().fit(X, y)
+    # model = LinearRegression().fit(X, y)
+    # model = HuberRegressor().fit(X, y)
+    ransac = RANSACRegressor(LinearRegression(), residual_threshold=1.5, random_state=42)
+    ransac.fit(X, y)
     # Use the model to predict delta_CE for a range of masses
     min_mass = calib_group['MASS'].min()
     max_mass = calib_group['MASS'].max()
     mass_range = np.linspace(min_mass, max_mass, 100).reshape(-1, 1)
     predicted_delta_CE = model.predict(mass_range)
-    r_squared = model.score(X, y)
     # Plot the model and data points
-    plt.scatter(calib_group['MASS'], calib_group['delta_collision_energy'], label='Data')
-    plt.plot(mass_range, predicted_delta_CE, color='red', label='Linear Model')
-    plt.xlabel('Mass')
-    plt.ylabel('Delta_CE')
-    plt.legend()
-    plt.suptitle('CE calibration for non-tryptic with charge ' + str(charge))
-    plt.title(" HuberRegressor with R2:" + str(r_squared))
-    plt.savefig('/home/cadams/Figures/model_non-tryptic_train' + str(charge) + '.png')
-    plt.cla()
-    # df_charge['delta_ce'] = model.predict(df_charge[['MASS']])
-    # df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + df_charge['delta_ce']
-    # appended_data.append(df_charge)
-
-
-p = (ggplot(calib_group, aes('MASS', 'delta_collision_energy')) # , color='SPECTRAL_ANGLE'
- + geom_point()
- + geom_smooth(method='lm')
- + labs(x='MASS', y='delta_collision_energy', title='Scatter Plot with Linear Regression Line')
- )
+    p = (ggplot(calib_group, aes('MASS', 'delta_collision_energy', color='SPECTRAL_ANGLE')) # , color='SPECTRAL_ANGLE'
+        + geom_point(alpha = 0.4)
+        # + geom_abline(intercept=model.intercept_, slope=model.coef_[0])
+        # + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with Linear Model {charge} \nSlope: {model.coef_[0]:.2f}, Intercept: {model.intercept_:.2f}, R2: {model.score(X, y):.2f}')
+        + geom_abline(intercept=ransac.estimator_.intercept_, slope=ransac.estimator_.coef_)
+        + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with Linear Model {charge} \nSlope: {ransac.estimator_.coef_[0]:.2f}, Intercept: {ransac.estimator_.intercept_:.2f}, R2: {ransac.score(X, y):.2f}')
+        )
+    p.save(filename = '/home/cadams/Figures/tryptic_validation_20p_RANSAC_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
+    df_charge['delta_ce'] = model.predict(df_charge[['MASS']])
+    df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + df_charge['delta_ce']
+    appended_data.append(df_charge)
 
 calibrated_annot_df = pd.concat(appended_data)
 
