@@ -48,9 +48,12 @@ base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeToo
 # train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-train.csv"
 # ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-train"
 # cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-tryptic.csv"
-train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
-ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
-cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
+# train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
+# ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
+# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
+train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-validation.csv"
+ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-validation"
+cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-tryptic.csv"
 
 annot_df = pd.read_csv(train_path)
 annot_df.INTENSITIES = annot_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -60,11 +63,11 @@ annot_df.SEQUENCE_INT = annot_df.SEQUENCE_INT.str.strip("][").str.split(", ").ap
 annot_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
 # full_df.columns
 
-# # Filter for the tryptic peptides
-# annot_df = annot_df.replace(np.nan, '')
-# col_filter = ['PRECURSOR_CHARGE']
-# annot_df[col_filter] = annot_df[annot_df[col_filter] > 1][col_filter]
-# annot_df = annot_df.dropna()
+# Filter for the tryptic peptides
+annot_df = annot_df.replace(np.nan, '')
+col_filter = ['PRECURSOR_CHARGE']
+annot_df[col_filter] = annot_df[annot_df[col_filter] > 1][col_filter]
+annot_df = annot_df.dropna()
 
 # -----------------------------------------------------------------------------
 
@@ -125,6 +128,7 @@ for charge, df_charge in grouped_charge_df:
         + geom_abline(intercept=ransac.estimator_.intercept_, slope=ransac.estimator_.coef_)
         + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with Linear Model {charge} \nSlope: {ransac.estimator_.coef_[0]:.2f}, Intercept: {ransac.estimator_.intercept_:.2f}, R2: {ransac.score(X, y):.2f}')
         )
+    # p.save(filename = '/home/cadams/Figures/tryptic_validation_20p_HuberRegressor_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
     p.save(filename = '/home/cadams/Figures/tryptic_validation_20p_RANSAC_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
     df_charge['delta_ce'] = model.predict(df_charge[['MASS']])
     df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + df_charge['delta_ce']
