@@ -5,6 +5,7 @@ from pickle import TRUE
 import pandas as pd
 import numpy as np
 import os
+import pickle
 
 from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
@@ -48,9 +49,6 @@ base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeToo
 # train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-train.csv"
 # ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-train"
 # cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-tryptic.csv"
-train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
-ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
-cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
 # train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-validation.csv"
 # ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-validation"
 # cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-tryptic.csv"
@@ -139,6 +137,27 @@ for charge, df_charge in grouped_charge_df:
 model_1 = models[0]
 model_2 = models[1]
 model_3 = models[2]
+
+# save the model to disk
+filename = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/ransac-1.sav"
+pickle.dump(model_1, open(filename, 'wb'))
+filename = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/ransac-2.sav"
+pickle.dump(model_2, open(filename, 'wb'))
+filename = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/ransac-3.sav"
+pickle.dump(model_3, open(filename, 'wb'))
+
+# -----------------------------------------------------------------------------
+# Apply model
+train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
+ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
+cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
+
+annot_df = pd.read_csv(train_path)
+annot_df.INTENSITIES = annot_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
+annot_df.MZ = annot_df.MZ.str.split(";").apply(lambda s: [float(x) for x in s])
+annot_df.SEQUENCE_INT = annot_df.SEQUENCE_INT.str.strip("][").str.split(", ").apply(lambda s: [int(x) for x in s])
+
+annot_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
 
 calibrated_annot_1 = annot_df[annot_df['PRECURSOR_CHARGE'] == 1]
 calibrated_annot_1['delta_ce'] = model_1.predict(calibrated_annot_1[['MASS']])
