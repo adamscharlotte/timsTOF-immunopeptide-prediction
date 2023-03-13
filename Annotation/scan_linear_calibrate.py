@@ -48,12 +48,12 @@ base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeToo
 # train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-train.csv"
 # ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-train"
 # cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-tryptic.csv"
-# train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
-# ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
-# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
-train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-validation.csv"
-ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-validation"
-cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-tryptic.csv"
+train_path = base_path + "total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv"
+ce_sa_path = base_path + "total-scan-consensus/ce_calibration/non-tryptic-validation"
+cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-non-tryptic.csv"
+# train_path = base_path + "total-scan-consensus/split/tryptic/annotated-40-ppm-validation.csv"
+# ce_sa_path = base_path + "total-scan-consensus/ce_calibration/tryptic-validation"
+# cali_path = base_path + "total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-validation-tryptic.csv"
 
 annot_df = pd.read_csv(train_path)
 annot_df.INTENSITIES = annot_df.INTENSITIES.str.split(";").apply(lambda s: [float(x) for x in s])
@@ -63,13 +63,14 @@ annot_df.SEQUENCE_INT = annot_df.SEQUENCE_INT.str.strip("][").str.split(", ").ap
 annot_df.rename(columns = {"median_CE": "ORIG_COLLISION_ENERGY"}, inplace=True)
 # full_df.columns
 
-# Filter for the tryptic peptides
-annot_df = annot_df.replace(np.nan, '')
-col_filter = ['PRECURSOR_CHARGE']
-annot_df[col_filter] = annot_df[annot_df[col_filter] > 1][col_filter]
-annot_df = annot_df.dropna()
+# # Filter for the tryptic peptides
+# annot_df = annot_df.replace(np.nan, '')
+# col_filter = ['PRECURSOR_CHARGE']
+# annot_df[col_filter] = annot_df[annot_df[col_filter] > 1][col_filter]
+# annot_df = annot_df.dropna()
 
 # -----------------------------------------------------------------------------
+# Generate model
 
 charges = annot_df['PRECURSOR_CHARGE'].unique()
 number_of_charges = charges.__len__()
@@ -85,12 +86,16 @@ predictor = PROSITpredictor(server="10.152.135.57:8500")
 
 CE_RANGE = range(5, 45)
 appended_data = []
+models = []
 
 for charge, df_charge in grouped_charge_df:
-    val_10p = round(len(df_charge)/5)
-    top_10p_df = df_charge.sort_values(['SCORE'], ascending=False).head(val_10p)
+    # val_10p = round(len(df_charge)/5)
+    # top_10p_df = df_charge.sort_values(['SCORE'], ascending=False).head(val_10p)
+    top_10p_df = df_charge
+    len(df_charge)
     top_10p_df = top_10p_df[top_10p_df['OBS_SEQUENCE'].str.len() <= 30]
     nrow = len(top_10p_df)
+    nrow
     top_10p_df = pd.concat([top_10p_df for _ in CE_RANGE], axis=0)
     top_10p_df["COLLISION_ENERGY"] = np.repeat(CE_RANGE, nrow)
     top_10p_df.reset_index(inplace=True)
@@ -115,27 +120,39 @@ for charge, df_charge in grouped_charge_df:
     # model = HuberRegressor().fit(X, y)
     ransac = RANSACRegressor(LinearRegression(), residual_threshold=1.5, random_state=42)
     ransac.fit(X, y)
-    # Use the model to predict delta_CE for a range of masses
-    min_mass = calib_group['MASS'].min()
-    max_mass = calib_group['MASS'].max()
-    mass_range = np.linspace(min_mass, max_mass, 100).reshape(-1, 1)
-    predicted_delta_CE = model.predict(mass_range)
+    # min_mass = calib_group['MASS'].min()
+    # max_mass = calib_group['MASS'].max()
+    # mass_range = np.linspace(min_mass, max_mass, 100).reshape(-1, 1)
+    # predicted_delta_CE = model.predict(mass_range)
     # Plot the model and data points
     p = (ggplot(calib_group, aes('MASS', 'delta_collision_energy', color='SPECTRAL_ANGLE')) # , color='SPECTRAL_ANGLE'
         + geom_point(alpha = 0.4)
         # + geom_abline(intercept=model.intercept_, slope=model.coef_[0])
         # + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with Linear Model {charge} \nSlope: {model.coef_[0]:.2f}, Intercept: {model.intercept_:.2f}, R2: {model.score(X, y):.2f}')
         + geom_abline(intercept=ransac.estimator_.intercept_, slope=ransac.estimator_.coef_)
-        + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with Linear Model {charge} \nSlope: {ransac.estimator_.coef_[0]:.2f}, Intercept: {ransac.estimator_.intercept_:.2f}, R2: {ransac.score(X, y):.2f}')
+        + labs(x='MASS', y='delta_collision_energy', title=f'Scatter Plot with RANSAC Model {charge} + \nSlope: {ransac.estimator_.coef_[0]:.2f}, Intercept: {ransac.estimator_.intercept_:.2f}, R2: {ransac.score(X, y):.2f}')
         )
     # p.save(filename = '/home/cadams/Figures/tryptic_validation_20p_HuberRegressor_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
-    p.save(filename = '/home/cadams/Figures/tryptic_validation_20p_RANSAC_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
-    df_charge['delta_ce'] = model.predict(df_charge[['MASS']])
-    df_charge['aligned_collision_energy'] = df_charge['ORIG_COLLISION_ENERGY'] + df_charge['delta_ce']
-    appended_data.append(df_charge)
+    p.save(filename = '/home/cadams/Figures/non-tryptic_train_full_RANSAC_'+ str(charge)+'.png', height=5, width=7, units = 'in', dpi=1000)
+    models.append(ransac)
 
-calibrated_annot_df = pd.concat(appended_data)
+model_1 = models[0]
+model_2 = models[1]
+model_3 = models[2]
 
+calibrated_annot_1 = annot_df[annot_df['PRECURSOR_CHARGE'] == 1]
+calibrated_annot_1['delta_ce'] = model_1.predict(calibrated_annot_1[['MASS']])
+calibrated_annot_1['aligned_collision_energy'] = calibrated_annot_1['ORIG_COLLISION_ENERGY'] + calibrated_annot_1['delta_ce']
+
+calibrated_annot_2 = annot_df[annot_df['PRECURSOR_CHARGE'] == 2]
+calibrated_annot_2['delta_ce'] = model_2.predict(calibrated_annot_2[['MASS']])
+calibrated_annot_2['aligned_collision_energy'] = calibrated_annot_2['ORIG_COLLISION_ENERGY'] + calibrated_annot_2['delta_ce']
+
+calibrated_annot_3 = annot_df[annot_df['PRECURSOR_CHARGE'] == 3]
+calibrated_annot_3['delta_ce'] = model_3.predict(calibrated_annot_3[['MASS']])
+calibrated_annot_3['aligned_collision_energy'] = calibrated_annot_3['ORIG_COLLISION_ENERGY'] + calibrated_annot_3['delta_ce']
+
+calibrated_annot_df = pd.concat([calibrated_annot_1, calibrated_annot_2, calibrated_annot_3])
 calibrated_annot_df['aligned_collision_energy'] = calibrated_annot_df['aligned_collision_energy'].apply(lambda x : float(round(x)))
 
 calibrated_annot_df_save = calibrated_annot_df
