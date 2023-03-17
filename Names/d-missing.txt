@@ -1,0 +1,2 @@
+TUM_first_pool_119;/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/Analysis/TUM_first_pool_119_01_01/TIMS-30min-R1-TIMS_semitryptic/230719_f1-TUM_first_pool_119_01_01-TIMS-30min-R1.d;2;10799
+TUM_first_pool_43;/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/Analysis/TUM_first_pool_43_01_01/TIMS-30min-R1-TIMS_semitryptic/230719_f1-TUM_first_pool_43_01_01-TIMS-30min-R1.d;2;11450
