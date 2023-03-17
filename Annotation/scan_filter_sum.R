@@ -6,8 +6,8 @@ pool <- args[1]
 # pool <- "TUM_first_pool_5"
 # pool <- "TUM_HLA2_115"
 
-# base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
-base_path <- "/Users/adams/Projects/300K/2022-library-run/"
+base_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/" # nolint
+# base_path <- "/Users/adams/Projects/300K/2022-library-run/"
 meta_path <- paste(base_path, "Metadata/full-pool-sequence.txt", sep = "")
 meta_qc_path <- paste(base_path, "Metadata/qc-peptides.txt", sep = "")
 mapped_precursor_path <- paste(base_path, "Annotation/extract-psm/", pool, ".csv", sep = "")  # nolint
@@ -30,6 +30,10 @@ tbl_pool_peptides <- fread(meta_path) %>%
     filter(pool_name == pool) %>%
     dplyr::rename(Proteins = pool_name) %>%
     distinct()
+
+tbl_pool_peptides %>%
+    mutate(length = nchar(Sequence)) %>%
+    arrange(desc(length))
 
 tbl_qc_peptides <- fread(meta_qc_path) %>%
     as_tibble() %>%
