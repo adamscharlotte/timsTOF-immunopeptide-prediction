@@ -14,7 +14,8 @@
 
 # Copy files
 # scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/precursor-consensus/calibrated-hdf5/precursor-20-ppm-calibrated_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
-scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/scan-consensus/calibrated-hdf5/scan-40-ppm-calibrated-mapped_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
+# scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/scan-consensus/calibrated-hdf5/scan-40-ppm-calibrated-mapped_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
+scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/total-scan-consensus/hdf5/scan-40-ppm-calibrated_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
 t3_W1xi_MhG3maK9_a$
 
 ssh -p 4024 root@ac922a.ucc.in.tum.de
@@ -27,7 +28,7 @@ cd /scratch/vitor/training/tims_tof_frozen_ce
 # Open screen
 # screen -S tims_tof
 screen -r tims_tof_train
-screen -r -d tims_train
+screen -r tims_train
 
 # Remove log
 cd /scratch/vitor/training/tims_tof/training
@@ -38,16 +39,32 @@ cd /scratch/vitor/prosit/prosit
 
 # With weights (refinement)
 # python training.py -r /scratch/vitor/training/tims_tof
-# python training.py -w /scratch/vitor/training/tims_tof/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof
+python training.py -w /scratch/vitor/training/tims_tof/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof
 
 python training_wandb_tims.py -w /scratch/vitor/training/tims_tof/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof
 # 
-python training.py -w /scratch/vitor/training/tims_tof_frozen_ce/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof_frozen_ce
+# python training.py -w /scratch/vitor/training/tims_tof_frozen_ce/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof_frozen_ce
 python training_wandb_tims.py -w /scratch/vitor/training/tims_tof_frozen_ce/training/weights_163_0.11385.hdf5 /scratch/vitor/training/tims_tof_frozen_ce
 
 # From scratch
 # python training.py /scratch/vitor/training/tims_tof
 python training_wandb_tims.py /scratch/vitor/training/tims_tof
+
+# ------------------------------------ PREDICT TEST SET -------------------------------------
+cd /scratch/vitor/prosit/prosit
+
+python prediction.py /scratch/vitor/training/tims_tof
+
+#  --weights_file /scratch/vitor/training/tims_tof/training/weights_28_0.143392.hdf5
+#  -d /scratch/data/scan-40-ppm-calibrated_test.hdf5 -n buker_test
+
+python prediction.py --help
+
+cd /scratch/vitor/training/tims_tof
+
+scp -r -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/prediction .
+scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/prediction/* .
+t3_W1xi_MhG3maK9_a$
 
 # -------------------------------------- DOWNLOAD LOG ---------------------------------------
 
