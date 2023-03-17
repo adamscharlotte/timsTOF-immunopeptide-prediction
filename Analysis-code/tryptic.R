@@ -60,3 +60,29 @@ tbl_msms %>%
     filter(str_detect(RAW_FILE, "Plate2"))
 
 tbl_pool %>% select(POOL_NAME) %>% distinct()
+
+
+library(tidyverse)
+library(data.table)
+
+spaceless <- function(x) {
+    colnames(x) <- gsub(" ", "_", colnames(x))
+    x
+    }
+
+base_path <- "/media/kusterlab/internal_projects/active/Proteometools/Proteometools/" # nolint
+msms_path <- paste(base_path, "Analysis/TUM_first_pool_12_01_01/TIMS-30min-R1-TIMS_semitryptic/combined/txt/msms.txt", sep = "") # nolint
+our_path <- paste(base_path, "External_data/Bruker/UA-TimsTOF-300K/TUM-Searches/first_pool-unsp/TUM_first_pool_12/combined/txt/msms.txt", sep = "") # nolint
+
+tbl_msms <- fread(msms_path) %>%
+    as_tibble() %>%
+    rename_with(toupper) %>%
+    spaceless()
+
+tbl_msms_us <- fread(our_path) %>%
+    as_tibble() %>%
+    rename_with(toupper) %>%
+    spaceless()
+
+tbl_msms %>% filter(REVERSE == "+")
+tbl_msms_us %>% filter(REVERSE == "+")
