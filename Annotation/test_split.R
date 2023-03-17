@@ -12,7 +12,7 @@ meta_path <- paste(base, "Metadata/full-pool-sequence.txt", sep = "")
 map_path <- paste(base, "Metadata/full-meta-map.txt", sep = "")
 msms_path <- paste(base, "msms-txt/", sep = "")
 # meta_qc_path <- paste(base, "Metadata/qc-peptides.txt", sep = "")
-filter_path <- paste(base, "Annotation/total-scan-consensus/summed-40-ppm/", sep = "") # nolint
+filter_path <- paste(base, "Annotation/total-scan-consensus/annotated-40-ppm/", sep = "") # nolint
 
 tbl_meta <- fread(meta_path) %>% as_tibble()
 tbl_meta %>%
@@ -113,7 +113,7 @@ nrow(tbl_train)
 all_sets <- bind_rows(tbl_test, tbl_validation, tbl_train)
 
 peptide_counts <- all_sets %>%
-    filter(PRECURSOR_CHARGE < 4) %>%
+    # filter(PRECURSOR_CHARGE < 4) %>%
     group_by(set) %>%
     count(OBS_SEQUENCE, name = "count") %>%
     ungroup()
@@ -128,12 +128,15 @@ peptides_to_keep <- top_peptides %>%
     filter(pep_count == 1)
 
 tbl_test_filtered <- tbl_test %>%
+    # filter(PRECURSOR_CHARGE < 4) %>%
     filter(OBS_SEQUENCE %in%
         peptides_to_keep[peptides_to_keep$set == "test", ]$OBS_SEQUENCE)
 tbl_train_filtered <- tbl_train %>%
+    # filter(PRECURSOR_CHARGE < 4) %>%
     filter(OBS_SEQUENCE %in%
         peptides_to_keep[peptides_to_keep$set == "train", ]$OBS_SEQUENCE)
 tbl_validation_filtered <- tbl_validation %>%
+    # filter(PRECURSOR_CHARGE < 4) %>%
     filter(OBS_SEQUENCE %in%
         peptides_to_keep[peptides_to_keep$set == "validation", ]$OBS_SEQUENCE)
 
@@ -145,18 +148,66 @@ nrow(tbl_test_filtered)
 nrow(tbl_validation_filtered)
 nrow(tbl_train_filtered)
 
+22749 + 25014 + 236873
 23062 + 25241 + 238466
 23568 + 25803 + 239404
 23717 + 25968 + 239595
 
 # ------------------ WRITE THE SUMMED PEPTIDES FOR EACH SET ------------------
-test_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-test.csv", sep = "") # nolint
-train_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-train.csv", sep = "") # nolint
-validation_path <- paste(base, "Annotation/total-scan-consensus/split/summed-40-ppm-validation.csv", sep = "") # nolint
+test_path <- paste(base, "Annotation/total-scan-consensus/split/tryptic/annotated-40-ppm-test.csv", sep = "") # nolint
+train_path <- paste(base, "Annotation/total-scan-consensus/split/tryptic/annotated-40-ppm-train.csv", sep = "") # nolint
+validation_path <- paste(base, "Annotation/total-scan-consensus/split/tryptic/annotated-40-ppm-validation.csv", sep = "") # nolint
 
-fwrite(tbl_test_filtered, test_path)
-fwrite(tbl_train_filtered, train_path)
-fwrite(tbl_validation_filtered, validation_path)
+tbl_test_filtered %>%
+    distinct() %>%
+    filter(startsWith(pool_name, "TUM_first_pool")) %>%
+    filter(PRECURSOR_CHARGE %in% c(2,3)) %>%
+    count(PRECURSOR_CHARGE)
+    select(OBS_SEQUENCE) %>%
+    distinct()
+    filter(!SEQUENCE == OBS_SEQUENCE)
+
+    %>%
+    fwrite(., test_path)
+
+tbl_train_filtered %>%
+    filter(startsWith(pool_name, "TUM_first_pool")) %>%
+    filter(PRECURSOR_CHARGE %in% c(2,3)) %>%
+    select(OBS_SEQUENCE) %>%
+    distinct()
+
+    filter(!SEQUENCE == OBS_SEQUENCE)
+
+    fwrite(., train_path)
+
+tbl_validation_filtered %>%
+    filter(startsWith(pool_name, "TUM_first_pool")) %>%
+    filter(PRECURSOR_CHARGE %in% c(2,3)) %>%
+    select(OBS_SEQUENCE) %>%
+    distinct()
+    filter(!SEQUENCE == OBS_SEQUENCE)
+
+
+
+    fwrite(., validation_path)
+
+test_path <- paste(base, "Annotation/total-scan-consensus/split/non-tryptic/annotated-40-ppm-test.csv", sep = "") # nolint
+train_path <- paste(base, "Annotation/total-scan-consensus/split/non-tryptic/annotated-40-ppm-train.csv", sep = "") # nolint
+validation_path <- paste(base, "Annotation/total-scan-consensus/split/non-tryptic/annotated-40-ppm-validation.csv", sep = "") # nolint
+
+tbl_test_filtered %>%
+    filter(!startsWith(pool_name, "TUM_first_pool")) %>%
+    fwrite(., test_path)
+tbl_train_filtered %>%
+    filter(!startsWith(pool_name, "TUM_first_pool")) %>%
+    fwrite(., train_path)
+tbl_validation_filtered %>%
+    filter(!startsWith(pool_name, "TUM_first_pool")) %>%
+    fwrite(., validation_path)
+
+tbl_train_filtered %>%
+    filter(!startsWith(pool_name, "TUM_first_pool")) %>%
+    filter(PRECURSOR_CHARGE == 4)
 
 # -------------------- WRITE THE POOL NAMES TO A TXT FILE --------------------
 test_set_t <- test_set$pool_name
@@ -174,3 +225,16 @@ write.table(validation_set_t,
     col.names = FALSE,
     row.names = FALSE,
     sep = "")
+
+# -------------------------------- QC CE PLOT ---------------------------------
+
+tbl_train_filtered %>%
+    filter(is.na(Proteins)) %>%
+    count(PRECURSOR_CHARGE)
+
+# 121 distinct QC peptides
+# 177 distinct QC peptides-charge combination
+
+# 1  3383
+# 2 10284
+# 3   678
