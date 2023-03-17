@@ -1,4 +1,5 @@
 # /Users/adams/opt/miniconda3/envs/prosit-annotate/bin/python3
+# /home/cadams/anaconda3/envs/prosit-annotate/bin/python3
 
 from operator import concat
 import pandas as pd
@@ -18,10 +19,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
 args = parser.parse_args()
 
-# pool = "TUM_first_pool_5"
+# pool = "TUM_first_pool_120"
 pool = args.pool
 
-base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
+# base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
+base_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/UA-TimsTOF-300K/Annotation/" # nolint
 sum_path = base_path + "total-scan-consensus/summed-40-ppm/" + pool + ".csv"
 annot_path = base_path + "total-scan-consensus/annotated-40-ppm/" + pool + ".csv"
 
@@ -48,3 +50,23 @@ full_df.to_csv(annot_path)
 print("Are spectra lost?", len(un_annot_df_combined.index) > len(full_df.index))
 
 # full_df[full_df["PRECURSOR"] == 8200][["INTENSITIES", "MZ"]].values
+
+un_annot_df_combined_120 = un_annot_df_combined
+un_annot_df_combined.columns
+un_annot_df_combined_120.columns
+un_annot_df_combined["PRECURSOR_CHARGE"]
+un_annot_df_combined_120["PRECURSOR_CHARGE"]
+
+
+initialize_peaks('IPADQGIAGHVATTGQILNIPDAYAHPLFY', 'TOF', 4)
+initialize_peaks('SAGELPAAHTAAAPGTPGEAAETPARPGLAK', 'TOF', 3)
+initialize_peaks('GPRPGSPSALLPGPGRPPPPPTKPPETEAQR', 'TOF', 4)
+initialize_peaks('SAGELPAAHTAAAPGTPGEAAETPARPGLAK', 'TOF', 4)
+initialize_peaks('GTPGEAAETPARPGLAK', 'TOF', 2)
+
+for index, row in un_annot_df_combined.iterrows():
+    try:
+        peaks, tmt_flag, seq, total_mass = initialize_peaks(row["MODIFIED_SEQUENCE"], row["MASS_ANALYZER"], row["PRECURSOR_CHARGE"])
+    except Exception as e:
+        print(f"Error processing row {index}: {row}")
+        print(f"Error message: {str(e)}")
