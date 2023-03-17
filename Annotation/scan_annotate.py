@@ -48,25 +48,3 @@ full_df["INTENSITIES"] = [';'.join(map(str, l)) for l in full_df['INTENSITIES']]
 full_df.to_csv(annot_path)
 
 print("Are spectra lost?", len(un_annot_df_combined.index) > len(full_df.index))
-
-# full_df[full_df["PRECURSOR"] == 8200][["INTENSITIES", "MZ"]].values
-
-un_annot_df_combined_120 = un_annot_df_combined
-un_annot_df_combined.columns
-un_annot_df_combined_120.columns
-un_annot_df_combined["PRECURSOR_CHARGE"]
-un_annot_df_combined_120["PRECURSOR_CHARGE"]
-
-
-initialize_peaks('IPADQGIAGHVATTGQILNIPDAYAHPLFY', 'TOF', 4)
-initialize_peaks('SAGELPAAHTAAAPGTPGEAAETPARPGLAK', 'TOF', 3)
-initialize_peaks('GPRPGSPSALLPGPGRPPPPPTKPPETEAQR', 'TOF', 4)
-initialize_peaks('SAGELPAAHTAAAPGTPGEAAETPARPGLAK', 'TOF', 4)
-initialize_peaks('GTPGEAAETPARPGLAK', 'TOF', 2)
-
-for index, row in un_annot_df_combined.iterrows():
-    try:
-        peaks, tmt_flag, seq, total_mass = initialize_peaks(row["MODIFIED_SEQUENCE"], row["MASS_ANALYZER"], row["PRECURSOR_CHARGE"])
-    except Exception as e:
-        print(f"Error processing row {index}: {row}")
-        print(f"Error message: {str(e)}")
