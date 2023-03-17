@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pool", type=str)					# Filename
 args = parser.parse_args()
 pool = args.pool
-pool = "TUM_lysn_33"
+# pool = "TUM_lysn_33"
 
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 annotated_path = base_path + "total-scan-consensus/annotated-40-ppm/" + pool + ".csv"
@@ -60,19 +60,24 @@ annotated_annot_df["SEQUENCE_INT"] = array.tolist()
 
 annotated_annot_df["PRECURSOR_CHARGE_ONEHOT"] = annotated_annot_df.apply(lambda row: int_to_onehot(row.PRECURSOR_CHARGE), axis = 1)
 
-collision_energies = np.asarray(annotated_annot_df.median_CE.values)
-# adjusted_collision_energies = np.asarray(annotated_annot_df.aligned_collision_energy.values/100.0)
-collision_energies_normalized = np.asarray(annotated_annot_df.median_CE.values/100.0)
-intensities = np.asarray(annotated_annot_df.INTENSITIES.values.tolist())
-masses = np.asarray(annotated_annot_df.MZ.values.tolist())
-methods = np.asarray(annotated_annot_df.FRAGMENTATION.values,dtype ='S3')
-precursor_charges = np.asarray(annotated_annot_df.PRECURSOR_CHARGE_ONEHOT.values.tolist())
-raw_files = np.asarray(annotated_annot_df.RAW_FILE.values,dtype='S120')
-scan_numbers = np.asarray(annotated_annot_df.SCAN_NUMBER.values)
-scores = np.asarray(annotated_annot_df.SCORE.values)
-sequence_integers = np.asarray(annotated_annot_df.SEQUENCE_INT.values.tolist())
-obs_sequence_integers = np.asarray(annotated_annot_df.OBS_SEQUENCE_INT.values.tolist())
-retention_time = np.asarray(annotated_annot_df.median_RETENTION_TIME.values)
+col_filter = ['PRECURSOR_CHARGE']
+annotated_annot_df[col_filter] = annotated_annot_df[annotated_annot_df[col_filter] <= 3][col_filter]
+filtered_annot_df = annotated_annot_df.dropna()
+print("How many PSMs with charge 4?", len(annotated_annot_df.index) - len(filtered_annot_df.index))
+
+collision_energies = np.asarray(filtered_annot_df.median_CE.values)
+# adjusted_collision_energies = np.asarray(filtered_annot_df.aligned_collision_energy.values/100.0)
+collision_energies_normalized = np.asarray(filtered_annot_df.median_CE.values/100.0)
+intensities = np.asarray(filtered_annot_df.INTENSITIES.values.tolist())
+masses = np.asarray(filtered_annot_df.MZ.values.tolist())
+methods = np.asarray(filtered_annot_df.FRAGMENTATION.values,dtype ='S3')
+precursor_charges = np.asarray(filtered_annot_df.PRECURSOR_CHARGE_ONEHOT.values.tolist())
+raw_files = np.asarray(filtered_annot_df.RAW_FILE.values,dtype='S120')
+scan_numbers = np.asarray(filtered_annot_df.SCAN_NUMBER.values)
+scores = np.asarray(filtered_annot_df.SCORE.values)
+sequence_integers = np.asarray(filtered_annot_df.SEQUENCE_INT.values.tolist())
+obs_sequence_integers = np.asarray(filtered_annot_df.OBS_SEQUENCE_INT.values.tolist())
+retention_time = np.asarray(filtered_annot_df.median_RETENTION_TIME.values)
 
 if os.path.exists(file_path):
     with h5py.File(file_path, 'a') as hf:
