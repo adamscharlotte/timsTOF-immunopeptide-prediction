@@ -1,5 +1,4 @@
 # /Users/adams/opt/miniconda3/envs/spectrum_utils/bin/python3
-# /Users/adams/opt/miniconda3/envs/ann_solo/bin/python3
 
 import os
 import logging
@@ -11,6 +10,13 @@ from spectrum_utils.spectrum import MsmsSpectrum
 from typing import Iterator
 from typing import List
 from pyteomics import mgf
+import pandas as pd
+import numpy as np
+
+from fundamentals import constants
+from fundamentals.fragments import initialize_peaks
+from fundamentals.annotation.annotation import annotate_spectra
+from fundamentals.mod_string import maxquant_to_internal
 
 def get_spectral_angle(intensities):
     pred= np.array(intensities[0])
@@ -28,6 +34,24 @@ def get_spectral_angle(intensities):
     product = np.sum(true_norm*pred_norm, axis=0)
     arccos = np.arccos(product)
     return 1-2*arccos/np.pi
+
+def read_mgf_df(filename: str):
+    identifier = []
+    precursor_mz = []
+    retention_time = []
+    charge = []
+    mz = []
+    intensity = []
+    for i, mgf_spectrum in enumerate(mgf.read(filename)):
+        identifier.append(mgf_spectrum['params']['title'])
+        precursor_mz.append(float(mgf_spectrum['params']['pepmass'][0]))
+        retention_time.append(float(mgf_spectrum['params']['rtinseconds']))
+        charge.append(int(mgf_spectrum['params']['charge'][0]))
+        mz.append(mgf_spectrum['m/z array'])
+        intensity.append(mgf_spectrum['intensity array'])
+    spectrum_df = pd.DataFrame({"identifier":identifier, "precursor_mz":precursor_mz,
+        "retention_time":retention_time, "charge":charge, "mz":mz, "intensity":intensity})
+    return spectrum_df
 
 def verify_extension(supported_extensions: List[str], filename: str) -> None:
     """
@@ -101,28 +125,88 @@ def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
 #     else:
 #         return ""
 
-def annotate_ion_type(annotation, ion_types="by"):
-    if annotation.ion_type[0] in ion_types:
-        if abs(annotation.isotope) == 1:
-            iso = "+i" if annotation.isotope > 0 else "-i"
-        elif annotation.isotope != 0:
-            iso = f"{annotation.isotope:+}i"
-        else:
-            iso = ""
-        return f"{annotation.ion_type}{iso}{'+' * annotation.charge}{nl}"
-    else:
-        return ""
+# def annotate_ion_type(annotation, ion_types="by"):
+#     if annotation.ion_type[0] in ion_types:
+#         if abs(annotation.isotope) == 1:
+#             iso = "+i" if annotation.isotope > 0 else "-i"
+#         elif annotation.isotope != 0:
+#             iso = f"{annotation.isotope:+}i"
+#         else:
+#             iso = ""
+#         return f"{annotation.ion_type}{iso}{'+' * annotation.charge}{nl}"
+#     else:
+#         return ""
 
+# -----------------------------------------------------------------------------
 charge = "1"
 peptide = "GVDAANSAAQQY"
 name_plot = "tims-vs-orbitrap"
 spectral_angle = "xx"
 
 mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
-mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-2.mgf"
+mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
+# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
 
 mgf1_id = "controllerType=0 controllerNumber=1 scan=" + "14634"
-mgf2_id = "3378_GVDAANSAAQQY"
+mgf2_id = "3378"
+# -----------------------------------------------------------------------------
+df_mgf1 = read_mgf_df(mgf1_filename)
+df_mgf2 = read_mgf_df(mgf2_filename)
+
+def order_peaks(df):
+    for i in range (len(df)):
+        zipped_list = zip(df.iloc[i]["mz"], df.iloc[i]["intensity"])
+        sorted_pair = sorted(zipped_list)
+        tuples = zip(*sorted_pair)
+        list_1, list_2 = [ list(tuple) for tuple in  tuples]
+        df.at[i, "mz"] = list_1
+        df.at[i, "intensity"] = list_2
+
+order_peaks(df_mgf1)
+order_peaks(df_mgf2)
+
+df_mgf1['id'] = df_mgf1['identifier'].str[41:].astype(int)
+df_mgf2['id'] = df_mgf2['identifier'].astype(int)
+
+df_mgf2.columns
+
+msms1 = pd.read_csv(msms1_path, sep='\t')
+msms2 = pd.read_csv(msms2_path, sep='\t')
+
+def merge_df(df_mgf, msms):
+    merged_df = pd.merge(df_mgf.drop('charge', axis=1), msms.drop('Intensities', axis=1), left_on='id', right_on='Scan number', how='inner')
+    new_columns = {col: col.replace(' ', '_').upper() for col in merged_df.columns}
+    merged_df.rename(columns=new_columns, inplace=True)
+    merged_df.rename(columns = {"CHARGE": "PRECURSOR_CHARGE"}, inplace=True)
+    merged_df.rename(columns = {"INTENSITY": "INTENSITIES"}, inplace=True)
+    merged_df['PRECURSOR_CHARGE'] = merged_df['PRECURSOR_CHARGE'].astype(int)
+    merged_df["MODIFIED_SEQUENCE"] = maxquant_to_internal(merged_df["MODIFIED_SEQUENCE"].to_numpy())
+    return merged_df
+
+merged_df1 = merge_df(df_mgf1, msms1)
+merged_df2 = merge_df(df_mgf2, msms2)
+
+annot_df1 = annotate_spectra(merged_df1)
+annot_df2 = annotate_spectra(merged_df2)
+
+full_df1 = pd.concat([merged_df1.drop(columns = ["INTENSITIES", "MZ"]), annot_df1], axis=1)
+full_df2 = pd.concat([merged_df2.drop(columns = ["INTENSITIES", "MZ"]), annot_df2], axis=1)
+
+filtered_df1 = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
+filtered_df1.rename(columns = {"INTENSITIES": "INTENSITIES_1", "MZ":"MZ_1"}, inplace=True)
+filtered_df2 = full_df2[full_df2["SEQUENCE"] == peptide]
+filtered_df2.rename(columns = {"INTENSITIES": "INTENSITIES_2", "MZ":"MZ_2"}, inplace=True)
+
+result = pd.merge(filtered_df1.assign(dummy=1), filtered_df2.assign(dummy=1), on='dummy', how='outer').drop('dummy', axis=1)
+result["SPECTRAL_ANGLE"] = result[['INTENSITIES_1','INTENSITIES_2']].apply(lambda x : get_spectral_angle(x), axis=1)
+result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+
+highest_row = result.nlargest(1, 'SPECTRAL_ANGLE')
+mgf1_id = highest_row["IDENTIFIER_x"].item()
+
+# -----------------------------------------------------------------------------
 
 mgf1_spectrum = None
 for spec in read_mgf(mgf1_filename):
