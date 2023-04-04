@@ -5,8 +5,11 @@ base <- "Z:\\\\internal_projects\\\\active\\\\ProteomeTools\\\\ProteomeTools\\\\
 # path <- "External_data\\\\Bruker\\\\UA-TimsTOF-300K\\\\"
 path <- "External_data\\\\Bruker\\\\PXD038782-comparison\\\\"
 local_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/" # nolint
-d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder" # nolint
-queue_path <- paste(local_path, "Queue/Annotation/queue-hla-i-d.csv", sep = "")
+# d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder" # nolint
+d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/raw" # nolint
+# queue_path <- paste(local_path, "Queue/Annotation/queue-raw-ii.csv", sep = "")
+queue_path <- paste(local_path, "Queue/Annotation/queue-raw.csv", sep = "")
+# queue_path <- paste(local_path, "Queue/Annotation/queue-hla-i-d.csv", sep = "")
 # local_path <- "/Users/adams/Projects/300K/Tryptic/"
 # local_path <- "/Users/adams/Projects/300K/2022-library-run/"
 # full_meta_map_path <- paste(local_path, "Metadata/full-meta-map.txt", sep = "")
@@ -14,19 +17,28 @@ queue_path <- paste(local_path, "Queue/Annotation/queue-hla-i-d.csv", sep = "")
 # min_max_length <- 11
 # tbl_full_meta_map <- fread(full_meta_map_path) %>% as_tibble
 
-setwd(local_path)
-hla_i_d <- list.files(d_path, pattern = "W6-32_17%_DDA_Rep#")
+# hla_i_d <- list.files(d_path, pattern = "W6-32_17%_DDA_Rep")
+list_raw <- list.files(d_path, pattern = ".raw")
 
 # tbl_queue <- tbl_full_meta_map %>%
-tbl_queue <- tibble(folder_name = hla_i_d) %>%
-    mutate(file_name = substr(folder_name, 1, nchar(folder_name) - 2),
+# tbl_queue <- tibble(folder_name = hla_i_d) %>%
+tbl_queue <- tibble(folder_name = list_raw) %>%
+    filter(str_detect(folder_name, "W6-32")) %>%
+    # filter(str_detect(folder_name, "Tue39")) %>%
+    # mutate(file_name = substr(folder_name, 1, nchar(folder_name) - 2),
+    mutate(file_name = substr(folder_name, 1, nchar(folder_name) - 4),
         MQ_version = "2.1.2.0", pre_payload = "generateMQpar",
-        post_payload = "cleanPostSearch", threads = 4, plate = "hla-i",
-        max_length_qc = 30,
+        post_payload = "cleanPostSearch", threads = 4,
+        # plate = "hla-i",
+        plate = "raw-hla-i",
+        # plate = "raw-hla-ii",
+        max_length_qc = 16,
+        # max_length_qc = 30,
         fasta_file = paste(base, path,
             "fasta\\\\uniprot_sprot-230323.fasta", sep = ""),
-        raw_folder = paste(base, path, "d-folder\\\\", folder_name, sep = ""),
-        base_mqpar = "mqpar-unspecific.xml",
+        # raw_folder = paste(base, path, "d-folder\\\\", folder_name, sep = ""),
+        raw_folder = paste(base, path, "raw\\\\", folder_name, sep = ""),
+        base_mqpar = "mqpar-raw.xml",
         output_folder = paste(base, path, "Searches\\\\", file_name, sep = "")
     ) %>%
     # mutate(pool = pool_name, MQ_version = "2.1.2.0",
