@@ -205,6 +205,7 @@ result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
 
 highest_row = result.nlargest(1, 'SPECTRAL_ANGLE')
 mgf1_id = highest_row["IDENTIFIER_x"].item()
+highest_SA = highest_row["SPECTRAL_ANGLE"].item()
 
 # -----------------------------------------------------------------------------
 
