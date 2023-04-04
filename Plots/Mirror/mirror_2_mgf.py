@@ -113,45 +113,18 @@ def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
         spectrum.is_processed = False
         yield spectrum
 
-# def annotate_ion_type(annotation, ion_types="aby"):
-#     if annotation.ion_type[0] in ion_types:
-#         if abs(annotation.isotope) == 1:
-#             iso = "+i" if annotation.isotope > 0 else "-i"
-#         elif annotation.isotope != 0:
-#             iso = f"{annotation.isotope:+}i"
-#         else:
-#             iso = ""
-#         nl = {"-NH3": "*", "-H2O": "o"}.get(annotation.neutral_loss, "")
-#         return f"{annotation.ion_type}{iso}{'+' * annotation.charge}{nl}"
-#     else:
-#         return ""
-
-# def annotate_ion_type(annotation, ion_types="by"):
-#     if annotation.ion_type[0] in ion_types:
-#         if abs(annotation.isotope) == 1:
-#             iso = "+i" if annotation.isotope > 0 else "-i"
-#         elif annotation.isotope != 0:
-#             iso = f"{annotation.isotope:+}i"
-#         else:
-#             iso = ""
-#         return f"{annotation.ion_type}{iso}{'+' * annotation.charge}{nl}"
-#     else:
-#         return ""
-
 # -----------------------------------------------------------------------------
 charge = "1"
-peptide = "GVDAANSAAQQY"
-name_plot = "tims-vs-orbitrap-HLA133-GVDAANSAAQQY"
-spectral_angle = "xx"
+peptide = "YPYPVSNSV"
+name_plot = "tims-vs-orbitrap-HLA15-YPYPVSNSV"
 
-mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
-mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
-# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
+mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
+mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_15.mgf"
+msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+# msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_15.txt"
+mgf2_id = "3035"
 
-mgf1_id = "controllerType=0 controllerNumber=1 scan=" + "14634"
-mgf2_id = "3378"
 # -----------------------------------------------------------------------------
 df_mgf1 = read_mgf_df(mgf1_filename)
 df_mgf2 = read_mgf_df(mgf2_filename)
@@ -223,13 +196,6 @@ df_combinations_filter = df_combinations[df_combinations["A"]!=df_combinations["
 df_combinations_filter["SPECTRAL_ANGLE"] = df_combinations_filter[['valueA','valueB']].apply(lambda x : get_spectral_angle(x), axis=1)
 df_combinations_filter["SPECTRAL_ANGLE"].fillna(0, inplace=True)
 
-# pairs = list(itertools.combinations(filtered_df['IDENTIFIER'], 2))
-# pair_values = [(pair[0], pair[1], filtered_df.loc[filtered_df['IDENTIFIER']==pair[0], 'INTENSITIES'].iloc[0], filtered_df.loc[filtered_df['IDENTIFIER']==pair[1], 'INTENSITIES'].iloc[0]) for pair in pairs]
-# df_pairs = pd.DataFrame(pair_values, columns=['A', 'B', 'valueA', 'valueB'])
-
-# df_pairs["SPECTRAL_ANGLE"] = df_pairs[['valueA','valueB']].apply(lambda x : get_spectral_angle(x), axis=1)
-# df_pairs["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-
 # Compute the average similarity score for each element in column 'A'
 avg_similarity = df_combinations_filter.groupby('A')['SPECTRAL_ANGLE'].mean().reset_index()
 
@@ -261,55 +227,7 @@ mgf1_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
 mgf2_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
 
 fig, ax = plt.subplots(figsize=(12, 6))
-sup.spectrum(mgf1_spectrum, grid=False, ax=ax)
-ax.set_title(peptide, fontdict={"fontsize": "xx-large"})
-ax.spines["right"].set_visible(False)
-ax.spines["top"].set_visible(False)
-plt.savefig("proforma_ex1.png", bbox_inches="tight", dpi=300, transparent=True)
-plt.close()
-
-fig, ax = plt.subplots(figsize=(12, 6))
-sup.spectrum(mgf2_spectrum, grid=False, ax=ax)
-ax.set_title(peptide, fontdict={"fontsize": "xx-large"})
-ax.spines["right"].set_visible(False)
-ax.spines["top"].set_visible(False)
-plt.savefig("proforma_ex2.png", bbox_inches="tight", dpi=300, transparent=True)
-plt.close()
-
-fig, ax = plt.subplots(figsize=(12, 6))
 sup.mirror(mgf1_spectrum, mgf2_spectrum)
 plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 plt.close()
-
-# --------
-mgf1_spectrum.annotate_proforma(
-    peptide,
-    fragment_tol_mass=10,
-    fragment_tol_mode="ppm",
-    ion_types="by",
-    max_ion_charge=3
-)
-
-fig, ax = plt.subplots(figsize=(12, 6))
-sup.spectrum(mgf1_spectrum, annot_fmt=annotate_ion_type, grid=False, ax=ax)
-ax.set_title(peptide, fontdict={"fontsize": "xx-large"})
-ax.spines["right"].set_visible(False)
-ax.spines["top"].set_visible(False)
-plt.savefig("annot_fmt.png", dpi=300, bbox_inches="tight", transparent=True)
-plt.close()
-
-if mgf2_spectrum is None:
-    raise ValueError('Could not find the specified query spectrum in mgf 2')
-
-set_matching_peaks(mgf1_spectrum, mgf2_spectrum)
-
-peak_matches = spectrum_match.get_best_match(
-    mgf1_spectrum, [mgf2_spectrum],
-    config.fragment_mz_tolerance, config.allow_peak_shifts)[2]
-
-plot.colors[None] = '#757575'
-fig, ax = plt.subplots(figsize=(15, 7))
-
-plot.mirror(mgf1_spectrum, mgf2_spectrum,
-            {'color_ions': True, 'annotate_ions': False}, ax)
