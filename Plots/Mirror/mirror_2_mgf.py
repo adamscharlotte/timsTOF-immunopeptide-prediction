@@ -12,6 +12,7 @@ from typing import List
 from pyteomics import mgf
 import pandas as pd
 import numpy as np
+import itertools
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
@@ -140,7 +141,7 @@ def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
 # -----------------------------------------------------------------------------
 charge = "1"
 peptide = "GVDAANSAAQQY"
-name_plot = "tims-vs-orbitrap"
+name_plot = "tims-vs-orbitrap-HLA133-GVDAANSAAQQY"
 spectral_angle = "xx"
 
 mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
@@ -195,6 +196,9 @@ full_df1 = pd.concat([merged_df1.drop(columns = ["INTENSITIES", "MZ"]), annot_df
 full_df2 = pd.concat([merged_df2.drop(columns = ["INTENSITIES", "MZ"]), annot_df2], axis=1)
 
 filtered_df1 = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
+filtered_df2 = full_df2[full_df2["SEQUENCE"] == peptide][full_df2["PRECURSOR_CHARGE"] == 1]
+
+filtered_df1 = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
 filtered_df1.rename(columns = {"INTENSITIES": "INTENSITIES_1", "MZ":"MZ_1"}, inplace=True)
 filtered_df2 = full_df2[full_df2["SEQUENCE"] == peptide]
 filtered_df2.rename(columns = {"INTENSITIES": "INTENSITIES_2", "MZ":"MZ_2"}, inplace=True)
@@ -203,15 +207,40 @@ result = pd.merge(filtered_df1.assign(dummy=1), filtered_df2.assign(dummy=1), on
 result["SPECTRAL_ANGLE"] = result[['INTENSITIES_1','INTENSITIES_2']].apply(lambda x : get_spectral_angle(x), axis=1)
 result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
 
-highest_row = result.nlargest(1, 'SPECTRAL_ANGLE')
-mgf1_id = highest_row["IDENTIFIER_x"].item()
-highest_SA = highest_row["SPECTRAL_ANGLE"].item()
+result[result["IDENTIFIER_x"] == most_similar]["SPECTRAL_ANGLE"]
+
+# -----------------------------------------------------------------------------
+filtered_df = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
+
+# Generate all possible combinations of elements
+combinations = list(itertools.product(filtered_df['IDENTIFIER'], filtered_df['IDENTIFIER']))
+
+# Create a new dataframe that contains these combinations and their corresponding values
+combination_values = [(combination[0], combination[1], filtered_df.loc[filtered_df['IDENTIFIER']==combination[0], 'INTENSITIES'].iloc[0], filtered_df.loc[filtered_df['IDENTIFIER']==combination[1], 'INTENSITIES'].iloc[0]) for combination in combinations]
+df_combinations = pd.DataFrame(combination_values, columns=['A', 'B', 'valueA', 'valueB'])
+df_combinations_filter = df_combinations[df_combinations["A"]!=df_combinations["B"]]
+
+df_combinations_filter["SPECTRAL_ANGLE"] = df_combinations_filter[['valueA','valueB']].apply(lambda x : get_spectral_angle(x), axis=1)
+df_combinations_filter["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+
+# pairs = list(itertools.combinations(filtered_df['IDENTIFIER'], 2))
+# pair_values = [(pair[0], pair[1], filtered_df.loc[filtered_df['IDENTIFIER']==pair[0], 'INTENSITIES'].iloc[0], filtered_df.loc[filtered_df['IDENTIFIER']==pair[1], 'INTENSITIES'].iloc[0]) for pair in pairs]
+# df_pairs = pd.DataFrame(pair_values, columns=['A', 'B', 'valueA', 'valueB'])
+
+# df_pairs["SPECTRAL_ANGLE"] = df_pairs[['valueA','valueB']].apply(lambda x : get_spectral_angle(x), axis=1)
+# df_pairs["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+
+# Compute the average similarity score for each element in column 'A'
+avg_similarity = df_combinations_filter.groupby('A')['SPECTRAL_ANGLE'].mean().reset_index()
+
+# Select the element with the lowest average similarity score
+most_similar = avg_similarity.loc[avg_similarity['SPECTRAL_ANGLE'].idxmax(), 'A']
 
 # -----------------------------------------------------------------------------
 
 mgf1_spectrum = None
 for spec in read_mgf(mgf1_filename):
-    if spec.identifier == mgf1_id:
+    if spec.identifier == most_similar:
         mgf1_spectrum = spec
         break
 
@@ -229,7 +258,7 @@ if mgf2_spectrum is None:
     raise ValueError('Could not find the specified query spectrum in mgf 2')
 
 mgf1_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
-mgf2_spectrum.annotate_proforma(peptide, 20, "ppm", ion_types="by")
+mgf2_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
 
 fig, ax = plt.subplots(figsize=(12, 6))
 sup.spectrum(mgf1_spectrum, grid=False, ax=ax)
@@ -249,9 +278,9 @@ plt.close()
 
 fig, ax = plt.subplots(figsize=(12, 6))
 sup.mirror(mgf1_spectrum, mgf2_spectrum)
-plt.savefig("mirror.png", dpi=300, bbox_inches="tight", transparent=True)
+plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
+plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 plt.close()
-
 
 # --------
 mgf1_spectrum.annotate_proforma(
@@ -284,19 +313,3 @@ fig, ax = plt.subplots(figsize=(15, 7))
 
 plot.mirror(mgf1_spectrum, mgf2_spectrum,
             {'color_ions': True, 'annotate_ions': False}, ax)
-
-
-ax.set_ylim(-1.1, 1.05)
-ax.text(0.5, 1.06, f'{mgf1_usi}',
-        horizontalalignment='center', verticalalignment='bottom',
-        fontsize='x-large', fontweight='bold', transform=ax.transAxes)
-ax.text(0.5, 1.02, f'Precursor (top): {mgf1} {mgf1_id}, '
-                f'Precursor (bottom): {mgf2} {mgf2_id}, '
-                f'Charge: {charge}, '
-                f'SA: {spectral_angle}',
-        horizontalalignment='center', verticalalignment='bottom',
-        fontsize='large', transform=ax.transAxes)
-
-plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-plt.close()
