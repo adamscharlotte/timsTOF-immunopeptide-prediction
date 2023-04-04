@@ -20,7 +20,7 @@ def binning(inp, ignoreCharges):
 # Import extracted_psm
 base_path = "/Users/adams/Projects/300K/2022-library-run/Annotation/"
 csv_path = base_path + "precursor-mapped/TUM_HLA_133.csv"
-mgf_path = base_path + "mapped-summed-mgf/TUM_HLA_133-2.mgf"
+mgf_path = base_path + "mapped-summed-mgf/TUM_HLA_133-3.mgf"
 
 csv_df = pd.read_csv(csv_path)
 csv_df.columns = csv_df.columns.str.replace(" ", "")
@@ -55,7 +55,8 @@ for i in range (len(un_annot_df_combined)):
     intensity_array = np.array(intensity_list)
     scan = un_annot_df_combined.iloc[i]["Scannumber"].astype(str)
     sequence = un_annot_df_combined.iloc[i]["Sequence"]
-    title = scan + "_" + sequence
+    # title = scan + "_" + sequence
+    title = scan
     mass = un_annot_df_combined.iloc[i]["Mass"]
     retentiontime = un_annot_df_combined.iloc[i]["rt_median"]
     charge = un_annot_df_combined.iloc[i]["CHARGE"]
