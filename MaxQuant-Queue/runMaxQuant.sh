@@ -21,4 +21,4 @@ module use /data/antwerpen/203/vsc20366/EasyBuild/modules/centos8/rome/2021b
 module load dotNET-SDK/3.1.300-linux-x64
 module load MaxQuant/2.3.1.0-GCCcore-11.2.0
 
-monitor -l mem-raw.log -d 5 -- mono $EBROOTMAXQUANT/bin/MaxQuantCmd.exe $VSC_SCRATCH/PXD038782-comp/mqpar-raw-worked.xml
+monitor -l mem-raw.log -d 5 -- mono MaxQuant_2.0.3.1/bin/MaxQuantCmd.exe $VSC_SCRATCH/PXD038782-comp/mqpar-raw-worked.xml
