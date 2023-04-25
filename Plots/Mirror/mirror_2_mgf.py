@@ -115,15 +115,18 @@ def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
 
 # -----------------------------------------------------------------------------
 charge = "1"
-peptide = "YPYPVSNSV"
-name_plot = "tims-vs-orbitrap-HLA15-YPYPVSNSV"
+peptide = "GVDAANSAAQQY"
+# name_plot = "tims-vs-orbitrap-HLA15-YPYPVSNSV"
+name_plot = "orbitrap-vs-orbiprediction-HLA_133-GVDAANSAAQQY"
 
-mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
-mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_15.mgf"
-msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-# msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_15.txt"
-mgf2_id = "3035"
+# mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
+mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
+mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_orbi_pred.mgf"
+# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+# msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_15.txt"
+# mgf2_id = "3035"
+mgf2_id = "14565"
 
 # -----------------------------------------------------------------------------
 df_mgf1 = read_mgf_df(mgf1_filename)
@@ -147,7 +150,7 @@ df_mgf2['id'] = df_mgf2['identifier'].astype(int)
 df_mgf2.columns
 
 msms1 = pd.read_csv(msms1_path, sep='\t')
-msms2 = pd.read_csv(msms2_path, sep='\t')
+# msms2 = pd.read_csv(msms2_path, sep='\t')
 
 def merge_df(df_mgf, msms):
     merged_df = pd.merge(df_mgf.drop('charge', axis=1), msms.drop('Intensities', axis=1), left_on='id', right_on='Scan number', how='inner')
@@ -160,7 +163,8 @@ def merge_df(df_mgf, msms):
     return merged_df
 
 merged_df1 = merge_df(df_mgf1, msms1)
-merged_df2 = merge_df(df_mgf2, msms2)
+# merged_df2 = merge_df(df_mgf2, msms2)
+merged_df2 = merge_df(df_mgf2, msms1)
 
 annot_df1 = annotate_spectra(merged_df1)
 annot_df2 = annotate_spectra(merged_df2)
@@ -179,8 +183,6 @@ filtered_df2.rename(columns = {"INTENSITIES": "INTENSITIES_2", "MZ":"MZ_2"}, inp
 result = pd.merge(filtered_df1.assign(dummy=1), filtered_df2.assign(dummy=1), on='dummy', how='outer').drop('dummy', axis=1)
 result["SPECTRAL_ANGLE"] = result[['INTENSITIES_1','INTENSITIES_2']].apply(lambda x : get_spectral_angle(x), axis=1)
 result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
-
-result[result["IDENTIFIER_x"] == most_similar]["SPECTRAL_ANGLE"]
 
 # -----------------------------------------------------------------------------
 filtered_df = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
@@ -203,10 +205,14 @@ avg_similarity = df_combinations_filter.groupby('A')['SPECTRAL_ANGLE'].mean().re
 most_similar = avg_similarity.loc[avg_similarity['SPECTRAL_ANGLE'].idxmax(), 'A']
 
 # -----------------------------------------------------------------------------
+result[result["IDENTIFIER_x"] == most_similar]["SPECTRAL_ANGLE"]
+# result[result["IDENTIFIER_x"] == "controllerType=0 controllerNumber=1 scan=14565"]["SPECTRAL_ANGLE"]
 
+# -----------------------------------------------------------------------------
 mgf1_spectrum = None
 for spec in read_mgf(mgf1_filename):
-    if spec.identifier == most_similar:
+    if spec.identifier == "controllerType=0 controllerNumber=1 scan=14565":
+    # if spec.identifier == most_similar:
         mgf1_spectrum = spec
         break
 
