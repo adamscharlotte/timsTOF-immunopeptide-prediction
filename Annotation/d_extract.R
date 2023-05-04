@@ -14,9 +14,9 @@ d_path <- args[1]
 txt_path <- args[2] # Should contain accumulatedMsmsScans.txt, msms.txt and pasefMsmsScans.txt
 path_to_bruker_dll <- args[3]
 
-# d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder/211113_SS_malignant_HNSCC_Tue39L243_20%_DDA_Rep1.d" # nolint
-# txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d" # nolint
-# path_to_bruker_dll <- "/media/c2m/5_user_files/cadams/libtimsdata.so"
+d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder/220404_NHG_benign_UDN10_Liver_W6-32_17%_DDA_Rep1.d" # nolint
+txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d" # nolint
+path_to_bruker_dll <- "/media/c2m/5_user_files/cadams/libtimsdata.so"
 
 # -----------------------------------------------------------------------------
 setup_bruker_so(path_to_bruker_dll)
@@ -106,7 +106,7 @@ tbl_raw_scan_group <- tbl_raw_scan %>%
     mutate(median_INV_ION_MOBILITY = median(INV_ION_MOBILITY)) %>%
     ungroup() %>%
     select(-c(COLLISION_ENERGY, INTENSITIES, MZ, RETENTION_TIME,
-        INV_ION_MOBILITY, FRAME, PRECURSOR)) %>%
+        INV_ION_MOBILITY, PRECURSOR)) %>%
     distinct()
 
 dt_msms <- data.table(tbl_msms)
