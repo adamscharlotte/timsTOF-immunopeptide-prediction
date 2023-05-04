@@ -16,23 +16,19 @@ from mgf_filter.util import timeStamped
 from mgf_filter.masterSpectrum import MasterSpectrum
 import pickle
 
-csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d/211113_SS_malignant_HNSCC_Tue39L243_20%_DDA_Rep1.csv" # nolint
-base_path = dir_path = os.path.dirname(csv_path)
+parser = argparse.ArgumentParser()
+parser.add_argument("csv_path", type=str)
+args = parser.parse_args()
+csv_path = args.csv_path
+
+# csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d/211113_SS_malignant_HNSCC_Tue39L243_20%_DDA_Rep1.csv" # nolint
+base_path = os.path.dirname(csv_path)
 csv_df = pd.read_csv(csv_path)
 
-# csv_df_charge = pd.read_csv(csv_path)
-# csv_df = csv_df_backup
-
-with open("/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d/example.pickle", "rb") as f:
-    dt = pickle.load(f)
-
-# csv_df["CHARGE"] = csv_df_charge["CHARGE"]
 csv_df.combined_INTENSITIES = csv_df.combined_INTENSITIES.str.split(";")
 csv_df.combined_INTENSITIES = csv_df.combined_INTENSITIES.apply(lambda s: [float(x) for x in s])
 csv_df.combined_MZ = csv_df.combined_MZ.str.split(";")
 csv_df.combined_MZ = csv_df.combined_MZ.apply(lambda s: [float(x) for x in s])
-
-csv_df.columns
 
 def binning(inp, ignoreCharges):
     ms = MasterSpectrum()
@@ -65,6 +61,8 @@ for i in range (len(csv_df_comb)):
     csv_df_comb.at[i, "MZ"] = list_1
     csv_df_comb.at[i, "INTENSITIES"] = list_2
 
-csv_df_comb['MZ_RANGE'] = "0"
+csv_df_comb["MZ_RANGE"] = "0"
 
-csv_df_comb.to_pickle('/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d/211113_SS_malignant_HNSCC_Tue39L243_20%_DDA_Rep1.pkl')
+file_name = csv_df["RAW_FILE"][0]
+
+csv_df_comb.to_pickle(base_path + "/" + file_name + ".pkl")
