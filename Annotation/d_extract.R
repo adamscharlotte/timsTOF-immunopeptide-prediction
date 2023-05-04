@@ -3,7 +3,6 @@
 library(tidyverse)
 library(data.table)
 library(timsr)
-library(microbenchmark)
 
 spaceless <- function(x) {
     colnames(x) <- gsub(" ", "_", colnames(x))
@@ -64,11 +63,7 @@ tbl_pasef <- fread(paste(txt_path, "/pasefMsmsScans.txt", sep = "")) %>%
     select(PRECURSOR, FRAME, SCANNUMBEGIN, SCANNUMEND, COLLISION_ENERGY) %>%
     distinct()
 
-# frame_min <- min(tbl_pasef$FRAME)
-# frame_max <- max(tbl_pasef$FRAME)
-
 df_tims <- TimsR(d_path) # get data handle
-
 df_raw <- df_tims[tbl_pasef$FRAME, all_columns]
 
 tbl_raw <- df_raw %>%
@@ -76,8 +71,6 @@ tbl_raw <- df_raw %>%
     rename_with(toupper) %>%
     spaceless() %>%
     distinct()
-
-# data table is 5 times quicker than tbl
 
 dt_raw <- data.table(tbl_raw)
 dt_pasef <- data.table(tbl_pasef)
@@ -126,10 +119,6 @@ tbl_msms_raw <- merge(dt_raw_scan_group, dt_msms, by = "SCAN_NUMBER",
         combined_MZ, MASS_ANALYZER, FRAGMENTATION,
         median_RETENTION_TIME, median_INV_ION_MOBILITY,
         median_CE, CHARGE)
-
-colnames(tbl_msms_raw)
-colnames(tbl_raw_scan_group)
-# tbl_msms_raw[4272,]
 
 file_name <- tbl_msms_raw %>% select(RAW_FILE) %>% distinct() %>% pull(RAW_FILE)
 dt_msms_raw <- data.table(tbl_msms_raw)
