@@ -14,9 +14,13 @@ d_path <- args[1]
 txt_path <- args[2] # Should contain accumulatedMsmsScans.txt, msms.txt and pasefMsmsScans.txt
 path_to_bruker_dll <- args[3]
 
-d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder/220404_NHG_benign_UDN10_Liver_W6-32_17%_DDA_Rep1.d" # nolint
-txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/test-d" # nolint
-path_to_bruker_dll <- "/media/c2m/5_user_files/cadams/libtimsdata.so"
+# d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/Jurkat-A549/d-folder/IPX_A549_A_S1-A2_1_11144.d" # nolint
+# txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/Jurkat-A549/reresults/IPX_A549_A_S1-A2_1_11144" # nolint
+# d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/d-folder/220404_NHG_benign_UDN10_Liver_Tue39L243_17%_DDA_Rep2.d" # nolint
+# txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d/220404_NHG_benign_UDN10_Liver_Tue39L243_17%_DDA_Rep2" # nolint
+# d_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/A375/A375-low-input-HLAI/E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496.d" # nolint
+# txt_path <- "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/A375/reresults/A375-low-input-HLAI/E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496" # nolint
+# path_to_bruker_dll <- "/media/c2m/5_user_files/cadams/libtimsdata.so"
 
 # -----------------------------------------------------------------------------
 setup_bruker_so(path_to_bruker_dll)
