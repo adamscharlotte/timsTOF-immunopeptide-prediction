@@ -33,7 +33,7 @@ df1 = pd.read_csv(file_1_path)
 df2 = pd.read_csv(file_2_path)
 
 df1["label"] = "HCD Prosit 2020"
-df2["label"] = "HCD TOF Prosit 2023"
+df2["label"] = "HCD TIMS Prosit 2023"
 
 df_prediction = pd.concat([df1, df2], axis=0)
 new_columns = {col: col.replace(" ", "_").upper() for col in df_prediction.columns}
@@ -44,48 +44,47 @@ df_prediction_filtered = df_prediction_map.loc[df_prediction_map.apply(lambda ro
 df_prediction_filtered["type"] = df_prediction_filtered["pool_name"].apply(lambda x: x[4:8])
 df_prediction_filtered["type"] = df_prediction_filtered["type"].replace({"firs":"Tryptic", "HLA_":"MHC-I", "HLA2":"MHC-II", "lysn":"LysN", "aspn":"AspN"})
 
-df_prediction_filtered.columns
-df_prediction_map.columns
-
 order = ["MHC-I", "MHC-II", "LysN", "AspN", "Tryptic"]
 
-# Calculate the medians
-path = "/Users/adams/Projects/300K/2022-library-run/Annotation/spectral-angle/pairwise/test-set/*.csv"
-all_files = glob.glob(path)
-dfs_sa = []
+# # Calculate the medians
+# path = "/Users/adams/Projects/300K/2022-library-run/Annotation/spectral-angle/pairwise/test-set/*.csv"
+# all_files = glob.glob(path)
+# dfs_sa = []
 
-for filename in all_files:
-    df = pd.read_csv(filename, header=0)
-    new_file_name = filename[88:-6]
-    df['file_name'] = filename  # add a new column with the file name
-    df['new_file_name'] = new_file_name
-    dfs_sa.append(df)
+# for filename in all_files:
+#     df = pd.read_csv(filename, header=0)
+#     new_file_name = filename[88:-6]
+#     df['file_name'] = filename  # add a new column with the file name
+#     df['new_file_name'] = new_file_name
+#     dfs_sa.append(df)
 
-sa_df = pd.concat(dfs_sa, ignore_index=True)
-median_df = sa_df.groupby('new_file_name')['SPECTRAL_ANGLE'].median().round(3)
+# sa_df = pd.concat(dfs_sa, ignore_index=True)
+# median_df = sa_df.groupby('new_file_name')['SPECTRAL_ANGLE'].median().round(3)
 
 # Plot
 plt.rcParams["figure.figsize"] = [8, 5]
-median_sa1 = 0.678
-median_sa2 = 0.726
-median_sa3 = 0.625
-median_sa4 = 0.744
-median_sa5 = 0.676
+# median_sa1 = 0.678
+# median_sa2 = 0.726
+# median_sa3 = 0.625
+# median_sa4 = 0.744
+# median_sa5 = 0.676
 fig = plt.figure()
+sns.set_context("talk")
+
 ax = fig.gca()
 ax = sns.violinplot(x="type",y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
-                    edgecolor=None, linewidth=0, palette=["#0E1C36", "#CDEAC0"],
-                    hue_order=["HCD TOF Prosit 2023", "HCD Prosit 2020"],
+                    # edgecolor=None, linewidth=0, palette=["#0E1C36", "#CDEAC0"],
+                    edgecolor=None, linewidth=0, palette=["#022873", "#7a8db3"],
+                    hue_order=["HCD TIMS Prosit 2023", "HCD Prosit 2020"],
                     order=order,
                     data=df_prediction_filtered, split=True)
-ax.axhline(median_sa1, color="black", linestyle="--", linewidth=1, xmax=0.2)
-ax.axhline(median_sa2, color="black", linestyle="--", linewidth=1, xmin=0.2, xmax= 0.4)
-ax.axhline(median_sa3, color="black", linestyle="--", linewidth=1, xmin=0.4, xmax= 0.6)
-ax.axhline(median_sa4, color="black", linestyle="--", linewidth=1, xmin=0.6, xmax=0.8)
-ax.axhline(median_sa5, color="black", linestyle="--", linewidth=1, xmin=0.8)
+# ax.axhline(median_sa1, color="black", linestyle="--", linewidth=1, xmax=0.2)
+# ax.axhline(median_sa2, color="black", linestyle="--", linewidth=1, xmin=0.2, xmax= 0.4)
+# ax.axhline(median_sa3, color="black", linestyle="--", linewidth=1, xmin=0.4, xmax= 0.6)
+# ax.axhline(median_sa4, color="black", linestyle="--", linewidth=1, xmin=0.6, xmax=0.8)
+# ax.axhline(median_sa5, color="black", linestyle="--", linewidth=1, xmin=0.8)
 # plt.legend(loc="lower right")
 ax.legend(loc="lower left", bbox_to_anchor=(1.0, 0.1), frameon=False)
-#sns.move_legend(ax, "lower right")
 ax.set_ylabel("Spectral angle", color="black")
 ax.set(xlabel=None)
 ax.spines["right"].set_color("none")
@@ -99,7 +98,7 @@ ax.tick_params(axis="x", colors="#464646")
 ax.tick_params(axis="y", colors="#464646")
 ax_x = plt.gca().xaxis
 ax_x.set_tick_params(pad=-5)
-plot_path = "/Users/adams/Projects/300K/Results/Figures/model-performance/violin-py/2020-vs-2023/type.png"
+plot_path = "/Users/adams/Projects/300K/Results/Figures/model-performance/violin-py/2020-vs-2023/type-ppt.png"
 plt.savefig(plot_path, dpi=300, bbox_inches="tight")
 # plt.show()
 
