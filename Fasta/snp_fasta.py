@@ -4,9 +4,9 @@ import pandas as pd
 import logging
 
 # Set up input and output file names
-fasta_file = "/Users/adams/Projects/300K/A549/fasta/UP000005640_9606.fasta"
-snp_file = "/Users/adams/Projects/300K/A549/fasta/A549_mutations.csv"
-output_file = "/Users/adams/Projects/300K/A549/fasta/MUT_A549_HLAI_UP000005640_9606.fasta"
+fasta_file = "/Users/adams/Projects/300K/MSV000091456-SCP/fasta/UP000005640_9606.fasta"
+snp_file = "/Users/adams/Projects/300K/MSV000091456-SCP/fasta/A375_mutations.csv"
+output_file = "/Users/adams/Projects/300K/MSV000091456-SCP/fasta/MUT_A375_HLAI_UP000005640_9606.fasta"
 
 # Define the number of amino acids to add before and after the SNP
 num_aa = 15
@@ -31,7 +31,7 @@ for i, row in mutations_df.iterrows():
             break
 
 not_mapped_count = mutations_count - len(mutations_df[["Uniprot ID", "Fasta ID"]])
-logging.info(f"There are {mutations_count} Uniprot IDs that could not be mapped to the fasta")
+logging.info(f"There are {not_mapped_count} Uniprot IDs that could not be mapped to the fasta")
 
 # Remove Proteins not found in the fasta
 mutations_df = mutations_df[~mutations_df["Fasta ID"].isna()]
