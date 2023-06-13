@@ -13,6 +13,7 @@ from pyteomics import mgf
 import pandas as pd
 import numpy as np
 import itertools
+import seaborn as sns
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
@@ -82,12 +83,10 @@ def verify_extension(supported_extensions: List[str], filename: str) -> None:
 def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
     """
     Read all spectra from the given mgf file.
-
     Parameters
     ----------
     filename: str
         The mgf file name from which to read the spectra.
-
     Returns
     -------
     Iterator[Spectrum]
@@ -113,25 +112,6 @@ def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
         spectrum.is_processed = False
         yield spectrum
 
-# -----------------------------------------------------------------------------
-charge = "1"
-peptide = "GVDAANSAAQQY"
-# name_plot = "tims-vs-orbitrap-HLA15-YPYPVSNSV"
-name_plot = "orbitrap-vs-orbiprediction-HLA_133-GVDAANSAAQQY"
-
-# mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
-mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
-mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_orbi_pred.mgf"
-# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-# msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_15.txt"
-# mgf2_id = "3035"
-mgf2_id = "14565"
-
-# -----------------------------------------------------------------------------
-df_mgf1 = read_mgf_df(mgf1_filename)
-df_mgf2 = read_mgf_df(mgf2_filename)
-
 def order_peaks(df):
     for i in range (len(df)):
         zipped_list = zip(df.iloc[i]["mz"], df.iloc[i]["intensity"])
@@ -140,17 +120,6 @@ def order_peaks(df):
         list_1, list_2 = [ list(tuple) for tuple in  tuples]
         df.at[i, "mz"] = list_1
         df.at[i, "intensity"] = list_2
-
-order_peaks(df_mgf1)
-order_peaks(df_mgf2)
-
-df_mgf1['id'] = df_mgf1['identifier'].str[41:].astype(int)
-df_mgf2['id'] = df_mgf2['identifier'].astype(int)
-
-df_mgf2.columns
-
-msms1 = pd.read_csv(msms1_path, sep='\t')
-# msms2 = pd.read_csv(msms2_path, sep='\t')
 
 def merge_df(df_mgf, msms):
     merged_df = pd.merge(df_mgf.drop('charge', axis=1), msms.drop('Intensities', axis=1), left_on='id', right_on='Scan number', how='inner')
@@ -162,22 +131,50 @@ def merge_df(df_mgf, msms):
     merged_df["MODIFIED_SEQUENCE"] = maxquant_to_internal(merged_df["MODIFIED_SEQUENCE"].to_numpy())
     return merged_df
 
+def concat_and_filter(merged_df, annot_df):
+    full_df = pd.concat([merged_df.drop(columns = ["INTENSITIES", "MZ"]), annot_df], axis=1)
+    filtered_df = full_df[full_df["SEQUENCE"] == peptide][full_df["PRECURSOR_CHARGE"] == 1]
+    return filtered_df
+
+# -----------------------------------------------------------------------------
+charge = "1"
+peptide = "GVDAANSAAQQY"
+
+# mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
+mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
+mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
+# mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_orbi_pred.mgf"
+# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
+# mgf2_id = "3035"
+# mgf2_id = "14565"
+mgf2_id = "3378"
+
+# -----------------------------------------------------------------------------
+df_mgf1 = read_mgf_df(mgf1_filename)
+df_mgf2 = read_mgf_df(mgf2_filename)
+
+order_peaks(df_mgf1)
+order_peaks(df_mgf2)
+
+df_mgf1['id'] = df_mgf1['identifier'].str[41:].astype(int)
+df_mgf2['id'] = df_mgf2['identifier'].astype(int)
+
+msms1 = pd.read_csv(msms1_path, sep='\t')
+msms2 = pd.read_csv(msms2_path, sep='\t')
+
 merged_df1 = merge_df(df_mgf1, msms1)
-# merged_df2 = merge_df(df_mgf2, msms2)
-merged_df2 = merge_df(df_mgf2, msms1)
+merged_df2 = merge_df(df_mgf2, msms2)
+# merged_df2 = merge_df(df_mgf2, msms1)
 
 annot_df1 = annotate_spectra(merged_df1)
 annot_df2 = annotate_spectra(merged_df2)
 
-full_df1 = pd.concat([merged_df1.drop(columns = ["INTENSITIES", "MZ"]), annot_df1], axis=1)
-full_df2 = pd.concat([merged_df2.drop(columns = ["INTENSITIES", "MZ"]), annot_df2], axis=1)
+filtered_df1 = concat_and_filter(merged_df1, annot_df1)
+filtered_df2 = concat_and_filter(merged_df2, annot_df2)
 
-filtered_df1 = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
-filtered_df2 = full_df2[full_df2["SEQUENCE"] == peptide][full_df2["PRECURSOR_CHARGE"] == 1]
-
-filtered_df1 = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
 filtered_df1.rename(columns = {"INTENSITIES": "INTENSITIES_1", "MZ":"MZ_1"}, inplace=True)
-filtered_df2 = full_df2[full_df2["SEQUENCE"] == peptide]
 filtered_df2.rename(columns = {"INTENSITIES": "INTENSITIES_2", "MZ":"MZ_2"}, inplace=True)
 
 result = pd.merge(filtered_df1.assign(dummy=1), filtered_df2.assign(dummy=1), on='dummy', how='outer').drop('dummy', axis=1)
@@ -185,7 +182,7 @@ result["SPECTRAL_ANGLE"] = result[['INTENSITIES_1','INTENSITIES_2']].apply(lambd
 result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
 
 # -----------------------------------------------------------------------------
-filtered_df = full_df1[full_df1["SEQUENCE"] == peptide][full_df1["PRECURSOR_CHARGE"] == 1]
+filtered_df = filtered_df1
 
 # Generate all possible combinations of elements
 combinations = list(itertools.product(filtered_df['IDENTIFIER'], filtered_df['IDENTIFIER']))
@@ -232,8 +229,26 @@ if mgf2_spectrum is None:
 mgf1_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
 mgf2_spectrum.annotate_proforma(peptide, 10, "ppm", ion_types="by")
 
-fig, ax = plt.subplots(figsize=(12, 6))
+# fig, ax = plt.subplots(figsize=(10, 5))
+cm = 1/2.54  # centimeters in inches
+
+width = 18*cm
+height = 7*cm
+# height = 11*cm
+# width = 14
+# height = 6
+fig, ax = plt.subplots(figsize=(width, height))
+
+plt.style.use(["seaborn-white", "seaborn-paper"])
+sns.set_context("paper")
+
 sup.mirror(mgf1_spectrum, mgf2_spectrum)
+sns.despine()
+ax.grid(False, which="both")
+# ax.right_ax.grid(False)
+name_plot = "paper-orbitrap-vs-orbitrap-HLA_133-" + peptide
+
 plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+plt.savefig(plot_path, dpi=600, bbox_inches='tight')
 plt.close()
+
