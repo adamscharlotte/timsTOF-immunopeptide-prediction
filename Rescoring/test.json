@@ -1,0 +1,25 @@
+{
+    "jobType": "Rescoring",
+    "tag": "notag",
+    "allFeatures": false,
+    "fileUploads": {
+        "search_type": "Maxquant",
+        "raw_type": "thermo",
+        "fasta": false,
+        "peptides.csv": true
+    },
+    "fastaDigestOptions": {
+        "collisionEnergy": false,
+        "protease": false,
+        "missedCleavages": false,
+        "oxidizedMethionine": false,
+        "charges": false
+    },
+    "models": {
+        "intensity": "Prosit_2020_intensity_hcd",
+        "irt": "Prosit_2019_irt"
+    },
+    "prosit_server": "10.152.135.47:8500",
+    "numThreads": 1,
+    "jobId": ""
+}
