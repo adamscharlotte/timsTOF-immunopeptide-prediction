@@ -26,7 +26,6 @@ def binning(inp, ignoreCharges):
     comb_ms = comb_ms.drop(columns=["counts", "left border", "right border", "start_mz", "ms1_charge", "rel_intensity_ratio", "counts_ratio"])
     return comb_ms
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("csv_path", type=str)
 args = parser.parse_args()
@@ -34,12 +33,12 @@ csv_path = args.csv_path
 
 # csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/Jurkat-A549/reresults/IPX_A549_A_S1-A2_1_11144/IPX_A549_A_S1-A2_1_11144.csv" # nolint
 # csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d/220404_NHG_benign_UDN10_Liver_Tue39L243_17%_DDA_Rep2/220404_NHG_benign_UDN10_Liver_Tue39L243_17%_DDA_Rep2.csv" # nolint
-# csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/A375/reresults/A375-low-input-HLAI/E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496/E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496.csv" # nolint
+csv_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/A375/reresults/A375-low-input-HLAI/E_20221201_NO30_400nL_HLAc1_1e7_directIP_titration_rep1_Slot2-3_1_3512/E_20221201_NO30_400nL_HLAc1_1e7_directIP_titration_rep1_Slot2-3_1_3512.csv" # nolint
 
 base_path = os.path.dirname(csv_path)
 
 total_list = []
-chunksize = 1000
+chunksize = 100
 with pd.read_csv(csv_path, chunksize=chunksize) as reader:
     for i, chunk in enumerate(reader):
         # if i == 2:
@@ -69,13 +68,17 @@ with pd.read_csv(csv_path, chunksize=chunksize) as reader:
 total_df = pd.concat(total_list, ignore_index=True)
 total_df["MZ_RANGE"] = "0"
 file_name = total_df["RAW_FILE"][0]
+test_df = total_df[~total_df.CHARGE.isin([4])]
 
 total_df.to_pickle(base_path + "/" + file_name + ".pkl")
+test_df.to_pickle(base_path + "/" + file_name + ".pkl")
+total_df.value_counts("CHARGE")
 
 # file_name = "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep3_Slot2-5_1_3521"
-# total_df = pd.read_pickle(base_path + "/" + file_name + ".pkl")
+
+# total_df = pd.read_pickle(base_path + "/" + "E_20221201_NO30_400nL_HLAc1_5e6_directIP_titration_rep3_Slot2-2_1_3511" + ".pkl")
 
 # total_df
 # df_raw_drop = total_df[["RAW_FILE", "SCAN_NUMBER", "INTENSITIES", "MZ", "MZ_RANGE","COLLISION_ENERGY"]]
 
-total_df.columns
+# total_df.columns
