@@ -83,10 +83,12 @@ def verify_extension(supported_extensions: List[str], filename: str) -> None:
 def read_mgf(filename: str) -> Iterator[MsmsSpectrum]:
     """
     Read all spectra from the given mgf file.
+    
     Parameters
     ----------
     filename: str
         The mgf file name from which to read the spectra.
+    
     Returns
     -------
     Iterator[Spectrum]
@@ -132,6 +134,19 @@ def merge_df(df_mgf, msms):
     return merged_df
 
 def concat_and_filter(merged_df, annot_df):
+    """
+    Read all spectra from the given mgf file.
+    
+    Parameters
+    ----------
+    filename: str
+        The mgf file name from which to read the spectra.
+    
+    Returns
+    -------
+    Iterator[Spectrum]
+        An iterator of spectra in the given mgf file.
+    """
     full_df = pd.concat([merged_df.drop(columns = ["INTENSITIES", "MZ"]), annot_df], axis=1)
     filtered_df = full_df[full_df["SEQUENCE"] == peptide][full_df["PRECURSOR_CHARGE"] == 1]
     return filtered_df
@@ -140,46 +155,43 @@ def concat_and_filter(merged_df, annot_df):
 charge = "1"
 peptide = "GVDAANSAAQQY"
 
-# mgf1_filename="/Users/adams/Downloads/02445d_BB3-TUM_HLA_15_01_01-3xHCD-1h-R4.mgf"
-mgf1_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
-mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
-# mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_orbi_pred.mgf"
-# msms1_path="/Users/adams/Downloads/TUM_HLA_15_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
-msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
-# mgf2_id = "3035"
+mgf2_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
+mgf1_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
+# mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
+# mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_hcd_pred.mgf"
+# mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_tims_pred.mgf"
+
+# msms1_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+msms1_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
+# msms2_path="/Users/adams/Projects/300K/2022-library-run/msms-txt/TUM_HLA_133.txt"
+msms2_path="/Users/adams/Downloads/TUM_HLA_133_01_01_3xHCD-1h-R4-unspecific/msms.txt"
+mgf2_id = "controllerType=0 controllerNumber=1 scan=14565"
+mgf1_id = "3378"
 # mgf2_id = "14565"
-mgf2_id = "3378"
 
 # -----------------------------------------------------------------------------
-df_mgf1 = read_mgf_df(mgf1_filename)
-df_mgf2 = read_mgf_df(mgf2_filename)
 
-order_peaks(df_mgf1)
-order_peaks(df_mgf2)
+def prepare_sa_df(mgf_filename, msms_path):
+    df_mgf = read_mgf_df(mgf_filename)
+    order_peaks(df_mgf)
+    df_mgf['id'] = df_mgf['identifier'].str[41:].astype(int)
+    msms = pd.read_csv(msms_path, sep='\t')
+    merged_df = merge_df(df_mgf, msms)
+    annot_df = annotate_spectra(merged_df)
+    filtered_df = concat_and_filter(merged_df, annot_df)
+    return filtered_df
 
-df_mgf1['id'] = df_mgf1['identifier'].str[41:].astype(int)
-df_mgf2['id'] = df_mgf2['identifier'].astype(int)
-
-msms1 = pd.read_csv(msms1_path, sep='\t')
-msms2 = pd.read_csv(msms2_path, sep='\t')
-
-merged_df1 = merge_df(df_mgf1, msms1)
-merged_df2 = merge_df(df_mgf2, msms2)
-# merged_df2 = merge_df(df_mgf2, msms1)
-
-annot_df1 = annotate_spectra(merged_df1)
-annot_df2 = annotate_spectra(merged_df2)
-
-filtered_df1 = concat_and_filter(merged_df1, annot_df1)
-filtered_df2 = concat_and_filter(merged_df2, annot_df2)
-
+filtered_df1 = prepare_sa_df(mgf1_filename, msms1_path)
 filtered_df1.rename(columns = {"INTENSITIES": "INTENSITIES_1", "MZ":"MZ_1"}, inplace=True)
+
+filtered_df2 = prepare_sa_df(mgf2_filename, msms2_path)
 filtered_df2.rename(columns = {"INTENSITIES": "INTENSITIES_2", "MZ":"MZ_2"}, inplace=True)
 
 result = pd.merge(filtered_df1.assign(dummy=1), filtered_df2.assign(dummy=1), on='dummy', how='outer').drop('dummy', axis=1)
 result["SPECTRAL_ANGLE"] = result[['INTENSITIES_1','INTENSITIES_2']].apply(lambda x : get_spectral_angle(x), axis=1)
 result["SPECTRAL_ANGLE"].fillna(0, inplace=True)
+
+result[["IDENTIFIER_x"] == "controllerType=0 controllerNumber=1 scan=14565"]
 
 # -----------------------------------------------------------------------------
 filtered_df = filtered_df1
@@ -208,7 +220,7 @@ result[result["IDENTIFIER_x"] == most_similar]["SPECTRAL_ANGLE"]
 # -----------------------------------------------------------------------------
 mgf1_spectrum = None
 for spec in read_mgf(mgf1_filename):
-    if spec.identifier == "controllerType=0 controllerNumber=1 scan=14565":
+    if spec.identifier == mgf1_id:
     # if spec.identifier == most_similar:
         mgf1_spectrum = spec
         break
@@ -239,16 +251,23 @@ height = 7*cm
 # height = 6
 fig, ax = plt.subplots(figsize=(width, height))
 
-plt.style.use(["seaborn-white", "seaborn-paper"])
+# plt.style.use(["seaborn-white", "seaborn-paper"])
+sns.set_style("whitegrid", {'axes.grid' : False})
 sns.set_context("paper")
 
 sup.mirror(mgf1_spectrum, mgf2_spectrum)
 sns.despine()
 ax.grid(False, which="both")
-# ax.right_ax.grid(False)
-name_plot = "paper-orbitrap-vs-orbitrap-HLA_133-" + peptide
+ax.set_ylim(-1.2, 1.1)
+ax.set_xlim(0, 1250)
+ax.text(960,1, "Spectral angle = 0.47")
+ax.text(10,1, "timsTOF")
+ax.text(10,-1.1, "Orbitrap")
 
-plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
+# # ax.right_ax.grid(False)
+# name_plot = "paper-tims-vs-orbi-pred-HLA_133-" + peptide
+
+# plot_path = "/Users/adams/Projects/300K/Results/Figures/Mirror/" + name_plot + ".png"
+plot_path = "/Users/adams/Projects/300K/Results/Figures/paper-fig-1.png"
 plt.savefig(plot_path, dpi=600, bbox_inches='tight')
-plt.close()
 

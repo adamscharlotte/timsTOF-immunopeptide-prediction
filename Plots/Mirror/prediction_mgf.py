@@ -23,9 +23,18 @@ from prosit_grpc.predictPROSIT import PROSITpredictor
 # mgf_path = args.mgf_path
 # charge_name = args.charge_name
 
-mgf_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/mgf/HLA_133_orbi_pred.mgf"
+mgf_path = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/mgf/HLA_133_tims_pred.mgf"
+# model = "Prosit_2020_intensity_hcd"
+# model = "Prosit_2020_intensity_cid"
+# collision_energy = 30
+model = "Prosit_2023_intensity_tims"
+collision_energy = 31
 
-predictor = PROSITpredictor(server="10.152.135.57:8500")
+path = "/home/cadams/anaconda3/envs/oktoberfest-0_1/lib/python3.8/site-packages/oktoberfest/certificates"
+predictor = PROSITpredictor(server="10.152.135.57:8500",
+            path_to_ca_certificate=os.path.join(path, "Proteomicsdb-Prosit-v2.crt"),
+            path_to_certificate=os.path.join(path, "oktoberfest-production.crt"),
+            path_to_key_certificate=os.path.join(path, "oktoberfest-production.key"),)
 
 data = {
     "SCAN_NUMBER": "14565",
@@ -33,7 +42,7 @@ data = {
     "RTs": 1275,
     "MODIFIED_SEQUENCE": ["GVDAANSAAQQY"],
     "PRECURSOR_CHARGE": [1],
-    "ORIG_COLLISION_ENERGY": [30]
+    "ORIG_COLLISION_ENERGY": [collision_energy]
 }
 
 df_133 = pd.DataFrame(data, columns=["SCAN_NUMBER", "MASS", "RTs", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE", "ORIG_COLLISION_ENERGY"])
@@ -41,14 +50,14 @@ df_133 = pd.DataFrame(data, columns=["SCAN_NUMBER", "MASS", "RTs", "MODIFIED_SEQ
 predictions = predictor.predict(sequences=df_133['MODIFIED_SEQUENCE'].values.tolist(),
                                 charges=df_133["PRECURSOR_CHARGE"].values.tolist(),
                                 collision_energies=df_133["ORIG_COLLISION_ENERGY"].values/100.0,
-                                                    models=['Prosit_2020_intensity_hcd'],
+                                                    models=[model],
                                                     disable_progress_bar=True)
 
-for key, value in predictions['Prosit_2020_intensity_hcd'].items():
+for key, value in predictions[model].items():
      print(key)
 
-df_133['PREDICTED_INTENSITY'] = predictions['Prosit_2020_intensity_hcd']['intensity'].tolist()
-df_133['MZ'] = predictions['Prosit_2020_intensity_hcd']['fragmentmz'].tolist()
+df_133['PREDICTED_INTENSITY'] = predictions[model]['intensity'].tolist()
+df_133['MZ'] = predictions[model]['fragmentmz'].tolist()
 df_133.columns
 
 spectra_list = []

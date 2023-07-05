@@ -77,11 +77,17 @@ def verify_extension(supported_extensions: List[str], filename: str) -> None:
 # ---------------------- Import data ----------------------
 # Data for bar plots
 
-data_tryptic = {'Category': ['Tryptic', 'Tryptic'],
-        'Charge': [2, 3],
-        'Training': [125075, 28734],
-        'Validation': [13316, 3167],
-        'Test': [10794, 3468]}
+# data_tryptic = {'Category': ['Tryptic', 'Tryptic'],
+#         'Charge': [2, 3],
+#         'Training': [125075, 28734],
+#         'Validation': [13316, 3167],
+#         'Test': [10794, 3468]}
+
+data_tryptic = {'Category': ['Tryptic', 'Tryptic', 'Tryptic'],
+        'Charge': [1, 2, 3],
+        'Training': [0,125075, 28734],
+        'Validation': [0,13316, 3167],
+        'Test': [0,10794, 3468]}
 
 data_nontryptic = {'Category': ['Non-Tryptic', 'Non-Tryptic', 'Non-Tryptic'],
         'Charge': [1, 2, 3],
@@ -106,7 +112,13 @@ train_non_path = base + "Annotation/total-scan-consensus/calibrated-linear-40-pp
 test_tryp_path = base + "Annotation/total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-test-tryptic.csv"
 train_tryp_path = base + "Annotation/total-scan-consensus/calibrated-linear-40-ppm/calibrated-40-ppm-train-tryptic.csv"
 
+train_non = pd.read_csv(train_non_path)
+train_non.aligned_collision_energy.min()
+train_non.aligned_collision_energy.max()
+
 test_non = pd.read_csv(test_non_path)
+test_non.aligned_collision_energy.min()
+
 test_tryp = pd.read_csv(test_tryp_path)
 test_tryp = test_tryp[test_tryp["PRECURSOR_CHARGE"] > 1]
 df_test = pd.concat([test_non, test_tryp], axis=0)
@@ -115,7 +127,7 @@ hcd = pd.read_csv(HCD_path)
 tims = pd.read_csv(TIMS_path)
 
 hcd["label"] = "HCD Prosit 2020"
-tims["label"] = "HCD TIMS Prosit 2023"
+tims["label"] = "TOF Prosit 2023"
 
 df_prediction = pd.concat([hcd, tims], axis=0)
 new_columns = {col: col.replace(" ", "_").upper() for col in df_prediction.columns}
@@ -125,6 +137,16 @@ df_prediction_map = pd.merge(df_prediction, df_test, on="SCAN_NUMBER", how="left
 df_prediction_filtered = df_prediction_map.loc[df_prediction_map.apply(lambda row: row["RAW_FILE"] in row["RAWFILE"], axis=1)]
 df_prediction_filtered["type"] = df_prediction_filtered["pool_name"].apply(lambda x: x[4:8])
 df_prediction_filtered["type"] = df_prediction_filtered["type"].replace({"firs":"Tryptic", "HLA_":"MHC-I", "HLA2":"MHC-II", "lysn":"LysN", "aspn":"AspN"})
+
+# Look for plotted SA
+
+train_non = pd.read_csv(train_non_path)
+hla_133 = train_non[train_non["pool_name"] == "TUM_HLA_133"]
+hla_133[hla_133["SCAN_NUMBER"] == 3378].OBS_SEQUENCE
+prediction_133 = pd.merge(df_prediction, hla_133, on="SCAN_NUMBER", how="left")
+prediction_133.columns
+prediction_133[prediction_133["SCAN_NUMBER"] == 3378].SPECTRAL_ANGLE
+prediction_133[prediction_133["SCAN_NUMBER"] == 3378].LABEL
 
 # Data for mirror plots
 charge = "1"
@@ -178,28 +200,29 @@ sns.set_style("whitegrid")
 
 cm = 1/2.54  # centimeters in inches
 width = 18*cm
-height = 14*cm
+height = 17*cm
 
 fig = plt.figure(constrained_layout=True, figsize=(width, height))
-# top, bottom = fig.subfigures(nrows=2, ncols=1, height_ratios=[1,2])
-axes = fig.subplot_mosaic([['a', 'a'], ['b', 'c'], ['b', 'd']])
+top, bottom = fig.subfigures(nrows=2, ncols=1, height_ratios=[1,2])
+axt = top.subplot_mosaic([['a','a', '', '', '']])
+# axt = top.subplot_mosaic([['a', '']])
+axb = bottom.subplot_mosaic([['b', 'c'], ['b', 'd']])
+# axb = bottom.subplot_mosaic([['a', ''], ['b', 'c'], ['b', 'd']])
 # axes = fig.subplot_mosaic([['a', 'a', 'a', 'a', '', '', '', '', '', ''],['b', 'b','b', 'b', 'b', 'c', 'c', 'c', 'c', 'c'],['b', 'b','b', 'b','b', 'd', 'd', 'd', 'd', 'd']])
 # axes = fig.subplot_mosaic([['a', 'a','a', '', '', ''],['b', 'b','b','c', 'c', 'c'],['b', 'b','b','d', 'd', 'd']])
 
 # Bar Plots
-ax_top = axes['a'].subplots(1, 2, sharey=True, width_ratios=[2, 1])
-
 sns.barplot(data=tryptic_melt, x='Condition', y='Peptide', hue='Charge',
-                palette=["#0E1C36", "#7A8DB3"], ax = ax_top[0])
-ax_top[0].set_title("Tryptic")
-ax_top[0].set_ylabel("Number of PSMs")
+                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = axt['a'])
+axt['a'].set_title("Tryptic")
+axt['a'].set_ylabel("Number of PSMs")
 
 sns.barplot(data=nontryptic_melt, x='Condition', y='Peptide', hue='Charge',
-                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = ax_top[1])
-ax_top[1].set_title("Non-Tryptic")
-ax_top[1].set_ylabel('')
-axes_list = [ax_top[0], ax_top[1]]
-ax_top[1].legend(frameon=False)
+                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = axt[''])
+axt[''].set_title("Non-Tryptic")
+axt[''].set_ylabel('')
+axes_list = [axt['a'], axt['']]
+axt[''].legend(frameon=False, title = "Charge state")
 
 for ax in axes_list:
     ax.set_ylim(0, 125000)
@@ -212,11 +235,11 @@ for ax in axes_list:
     ax.spines["left"].set_color("none")
     ax.spines["bottom"].set_color("none")
     ax.yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
-    ax.tick_params(axis="x", colors="#464646")
-    ax.tick_params(axis="y", colors="#464646")
+    # ax.tick_params(axis="x", colors="#464646")
+    # ax.tick_params(axis="y", colors="#464646")
 
-ax_top[0].get_legend().remove()
-ax_top[1].yaxis.set_ticklabels([])
+axt['a'].get_legend().remove()
+axt[''].yaxis.set_ticklabels([])
 
 # Violin Plot
 order = ["MHC-I", "MHC-II", "LysN", "AspN", "Tryptic"]
@@ -224,39 +247,62 @@ order = ["MHC-I", "MHC-II", "LysN", "AspN", "Tryptic"]
 sns.violinplot(x="type",y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
                     # edgecolor=None, linewidth=0, palette=["#0E1C36", "#CDEAC0"],
                     edgecolor=None, linewidth=0, palette=["#022873", "#7a8db3"],
-                    hue_order=["HCD TIMS Prosit 2023", "HCD Prosit 2020"],
+                    hue_order=["TOF Prosit 2023", "HCD Prosit 2020"],
                     order=order,
                     data=df_prediction_filtered, split=True,
-                    ax=axes['b'])
+                    ax=axb['b'])
 
-axes['b'].legend(
+axb['b'].legend(
     loc='upper center', 
-    bbox_to_anchor=(0.5, 1.1),
+    bbox_to_anchor=(0.5, 1.05),
     ncol=2, frameon=False
 )
-axes['b'].set_ylabel("Spectral angle", color="black")
-axes['b'].set(xlabel=None)
-axes['b'].spines["right"].set_color("none")
-axes['b'].spines["top"].set_color("none")
-axes['b'].spines["left"].set_color("none")
-axes['b'].spines["bottom"].set_color("none")
-axes['b'].yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
-axes['b'].tick_params(axis="x", colors="#464646")
-axes['b'].tick_params(axis="y", colors="#464646")
-ax_x = plt.gca().xaxis
-ax_x.set_tick_params(pad=-5)
+axb['b'].set_ylabel("Spectral angle", color="black")
+axb['b'].set(xlabel=None)
+axb['b'].spines["right"].set_color("none")
+axb['b'].spines["top"].set_color("none")
+axb['b'].spines["left"].set_color("none")
+axb['b'].spines["bottom"].set_color("none")
+axb['b'].yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
+# axb['b'].tick_params(axis="x", colors="#464646")
+# axb['b'].tick_params(axis="y", colors="#464646")
+# ax_x = plt.gca().xaxis
+# ax_x.set_tick_params(pad=-5)
+axb['b'].tick_params(axis='x', pad=0)
 
 # Mirror Plot
-sup.mirror(mgf1_spectrum, mgf2_spectrum, ax = axes['c'])
-axes['c'].grid(False, which="both")
+sup.colors["y"] = "#F33B16"
+sup.colors["b"] = "#7A8DB3"
 
-sup.mirror(mgf1_spectrum, mgf3_spectrum, ax = axes['d'])
-axes['d'].grid(False, which="both")
+sup.mirror(mgf1_spectrum, mgf2_spectrum, ax = axb['c'])
+sup.mirror(mgf1_spectrum, mgf3_spectrum, ax = axb['d'])
+
+axb['c'].text(1000,1, "SA=0.54")
+axb['d'].text(1000,1,"SA=0.82")
+
+# axb['c'].text(10,1, "TimsTOF")
+# axb['d'].text(10,1, "TimsTOF")
+
+# axb['c'].text(10,-1.1, "HCD Prosit 2020")
+# axb['d'].text(10,-1.1, "TOF Prosit 2023")
+
+ax_mir = [axb['c'], axb['d']]
+for ax in ax_mir:
+    ax.grid(False, which="both")
+    ax.set_ylim(-1.3, 1.1)
+    ax.set_xlim(0, 1250)
+    ax.tick_params(axis='x', pad=3)
 
 sns.despine()
-plt.tight_layout()
+plt.tight_layout(pad=0.4)
 
-for label, ax in axes.items():
+for label, ax in axt.items():
+    # label physical distance to the left and up:
+    trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+            fontsize='x-large', va='bottom', weight='bold')
+
+for label, ax in axb.items():
     # label physical distance to the left and up:
     trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,

@@ -63,7 +63,7 @@ dir_list = ["E_20221201_NO30_400nL_HLAc1_1e6_directIP_titration_rep1_Slot1-06_1_
             "E_20221201_NO30_400nL_HLAc1_2e7_directIP_titration_rep1_Slot2-4_1_3515",
             "E_20221201_NO30_400nL_HLAc1_2e7_directIP_titration_rep3_Slot2-4_1_3518",
             "E_20221201_NO30_400nL_HLAc1_2e7_directIP_titration_rep4_Slot2-4_1_3519",
-        #    "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496",
+           "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep1_Slot1-04_1_3496",
              "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep2_Slot2-5_1_3520",
            "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep3_Slot2-5_1_3521",
            "E_20221201_NO30_400nL_HLAc1_4e7_directIP_titration_rep4_Slot2-5_1_3522"]

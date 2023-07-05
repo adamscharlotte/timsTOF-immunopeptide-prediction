@@ -6,8 +6,9 @@ import os
 import re
 from tqdm import tqdm
 import matplotlib.ticker as mtick
+import logging
 
-sns.set_context("talk")
+sns.set_context("paper")
 
 def load_files_to_dfs(root_folder, file_pattern):
     # Initialize an empty list to store the file paths
@@ -135,15 +136,63 @@ def plot_gain_loss(prosit_target: pd.DataFrame, andromeda_target: pd.DataFrame, 
     plt.title(f"{type} 1% FDR\n")#, fontsize=14)
     plt.savefig(directory + f"/{plot_name}_{type}_1%_FDR.png", dpi=300, bbox_inches="tight")
 
-# root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims-ii"
-root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims"
+def prep_multiple_gain_loss(root_folder, reorderlist):
+    prosit_pep_target = load_files_to_dfs(root_folder, "rescore_target.peptides")
+    andromeda_pep_target = load_files_to_dfs(root_folder, "original_target.peptides")
+    prosit_pep_target["Sample"] = prosit_pep_target["RAW_FILE"].str.replace(r'(-\d+$)', "")
+    andromeda_pep_target["Sample"] = andromeda_pep_target["RAW_FILE"].str.replace(r'(-\d+$)', "")
+    join_col = ["Sample","peptide"]
+    andromeda_target = andromeda_pep_target[andromeda_pep_target["q-value"] < 0.01]
+    prosit_target = prosit_pep_target[prosit_pep_target["q-value"] < 0.01]
+    merged_df = prosit_target.merge(andromeda_target, how="inner", on=join_col)
+    len_prosit = len(prosit_target)
+    len_adromeda = len(andromeda_target)
+    gain_fold = len(prosit_target)/len(andromeda_target)
+    logging.info(f"There are {len_adromeda} PSMs identified with MaxQuant.")
+    logging.info(f"There are {len_prosit} PSMs identified after rescoring.")
+    logging.info(f"There is a gain of {gain_fold} fold.")
+    print(f"There are {len_adromeda} PSMs identified with MaxQuant.")
+    print(f"There are {len_prosit} PSMs identified after rescoring.")
+    print(f"There is a gain of {gain_fold} fold.")
+    andromeda_target = andromeda_target.drop_duplicates(subset=["Sample", "peptide"])
+    prosit_target = prosit_target.drop_duplicates(subset=["Sample", "peptide"])
+    merged_df = merged_df.drop_duplicates(subset=["Sample", "peptide"])
+    merged_df["Value"] = merged_df.groupby("Sample")['peptide'].transform("count")
+    andromeda_target["Value"] = andromeda_target.groupby("Sample")['peptide'].transform("count")
+    prosit_target["Value"] = prosit_target.groupby("Sample")['peptide'].transform("count")
+    merged_df["Label"] = "Shared"
+    andromeda_target["Label"] = "Lost"
+    prosit_target["Label"] = "Gained"
+    merged = merged_df[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
+    andromeda = andromeda_target[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
+    prosit = prosit_target[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
+    andromeda["Value"] = andromeda["Value"] - merged["Value"]
+    prosit = prosit.sort_values("Sample")
+    merged = merged.sort_values("Sample")
+    andromeda = andromeda.sort_values("Sample")
+    full_df = prosit.append(merged).append(andromeda)
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_Tue39L243_\d+%_orbitrap_DDA_Rep\d)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_Tue39L243_\d+%_DDA_Rep\d)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_Tue39L243_\d+%_Rep\d)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(^\d+_[A-Z]+_[a-z]+_)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(^UDN\d+_)', "")
+    # pd.set_option('display.max_colwidth', None)
+    # full_df.drop_duplicates("Sample")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_W6-\d+_\d+%_[a-z]+_DDA_Rep\d)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_W6-\d+_\d+%_[A-Z]+_Rep\d)', "")
+    full_df["Sample"] = full_df["Sample"].str.replace(r'(_W6-32_17%_Rep\d)', "")
+    full_df['Value'] = np.where(full_df['Label'] == 'Lost', -full_df['Value'], full_df['Value'])
+    return full_df
+
+root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims-ii"
+# root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims"
 output_dir = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/Figures/LSG"
 prosit_pep_target = load_files_to_dfs(root_folder, "rescore_target.peptides")
 andromeda_pep_target = load_files_to_dfs(root_folder, "original_target.peptides")
 prosit_psms_target = load_files_to_dfs(root_folder, "rescore_target.psms")
 andromeda_psms_target = load_files_to_dfs(root_folder, "original_target.psms")
 
-plot_name = "HLA-I-tims"
+plot_name = "HLA-II-tims"
 plot_gain_loss(prosit_pep_target, andromeda_pep_target, "Peptides", output_dir, plot_name)
 plot_gain_loss(prosit_psms_target, andromeda_psms_target, "PSMs", output_dir, plot_name)
 
@@ -159,48 +208,8 @@ merged_df = prosit_target.merge(andromeda_target, how="inner", on=join_col)
 shared = len(merged_df.index)
 gained = len(prosit_target.index) - shared
 lost = len(andromeda_target.index) - shared
-fig, ax = plt.subplots(1, figsize=(1.5, 10))
-labels = [""]
-ax1 = ax.bar(labels, shared, width=0.5, color="#7a8db3")
-ax2 = ax.bar(labels, gained, width=0.5, bottom=shared, color="#cdeac0")
-ax3 = ax.bar(labels, -lost, color="#f33b16", width=0.5)
-for r1, r2, r3, v1, v2, v3 in zip(ax1, ax2, ax3, [shared], [gained], [lost]):
-    h1 = r1.get_height()
-    h2 = r2.get_height()
-    plt.text(
-        r1.get_x() + r1.get_width() / 2.0,
-        h1 / 2.0,
-        "%d" % v1,
-        ha="center",
-        va="bottom",
-        color="black",
-    )
-    plt.text(
-        r2.get_x() + r2.get_width() / 2.0,
-        h1 + h2 / 2,
-        "%d" % v2,
-        ha="center",
-        va="bottom",
-        color="black",
-    )
-    plt.text(
-        r3.get_x() + r3.get_width() / 2.0,
-        -0.025 * gained,
-        "%d" % -v3,
-        ha="center",
-        va="bottom",
-        color="black",
-    )
-plt.ylim(-lost - 100, h1 + h2 + 30)
-# remove spines
-ax.spines["right"].set_visible(False)
-ax.spines["left"].set_visible(False)
-ax.spines["top"].set_visible(False)
-ax.spines["bottom"].set_visible(False)
-# for minor ticks
-ax.set_xticks([], minor=True)
-plt.title(f"{type} 1% FDR\n")#, fontsize=14)
-plt.savefig(directory + f"/{plot_name}_{type}_1%_FDR.png", dpi=300, bbox_inches="tight")
+
+# --------------------- Combined LSG plots ---------------------
 
 # root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/Jurkat-A549/reresults"
 # dir_list = ["IPX67_HLAI_A_S1-A2_1_10830"]#, "IPX67_HLAI_B_S1-A8_1_10836"]
@@ -219,87 +228,73 @@ plt.savefig(directory + f"/{plot_name}_{type}_1%_FDR.png", dpi=300, bbox_inches=
 
 # --------------------- Multiple LSG plots ---------------------
 
-prosit_pep_target["Sample"] = prosit_pep_target["RAW_FILE"].str[:-4]
-andromeda_pep_target["Sample"] = andromeda_pep_target["RAW_FILE"].str[:-4]
-
-join_col = ["Sample","peptide"]
-
-andromeda_target = andromeda_pep_target[andromeda_pep_target["q-value"] < 0.01]
-prosit_target = prosit_pep_target[prosit_pep_target["q-value"] < 0.01]
-merged_df = prosit_target.merge(andromeda_target, how="inner", on=join_col)
-
-len(prosit_target)
-len(andromeda_target)
-len(prosit_target)/len(andromeda_target)
-
-andromeda_target = andromeda_target.drop_duplicates(subset=["Sample", "peptide"])
-prosit_target = prosit_target.drop_duplicates(subset=["Sample", "peptide"])
-merged_df = merged_df.drop_duplicates(subset=["Sample", "peptide"])
-
-merged_df["Value"] = merged_df.groupby('Sample')['peptide'].transform("count")
-andromeda_target["Value"] = andromeda_target.groupby('Sample')['peptide'].transform("count")
-prosit_target["Value"] = prosit_target.groupby('Sample')['peptide'].transform("count")
-
-merged_df["Label"] = "Shared"
-andromeda_target["Label"] = "Lost"
-prosit_target["Label"] = "Gained"
-
-merged = merged_df[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
-andromeda = andromeda_target[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
-prosit = prosit_target[["Value", "Sample", "Label"]].drop_duplicates().reset_index()[["Value", "Sample", "Label"]].sort_values("Sample")
-
-andromeda["Value"] = andromeda["Value"] - merged["Value"]
-# prosit["Value"] = prosit["Value"]
-
-prosit['Sample'] = prosit['Sample'].str.replace(r'(^\d+_[A-Z]+_[a-z]+_)', "")
-prosit['Sample'] = prosit['Sample'].str.replace(r'(_W6-\d+_\d+%_[A-Z]+_$)', "")
-prosit['Sample'] = prosit['Sample'].str.replace(r'(^UDN\d+_)', "")
-prosit['Sample'] = prosit['Sample'].str.replace(r'(_W6-32_17%_$)', "")
-
-merged['Sample'] = merged['Sample'].str.replace(r'(^\d+_[A-Z]+_[a-z]+_)', "")
-merged['Sample'] = merged['Sample'].str.replace(r'(_W6-\d+_\d+%_[A-Z]+_$)', "")
-merged['Sample'] = merged['Sample'].str.replace(r'(^UDN\d+_)', "")
-merged['Sample'] = merged['Sample'].str.replace(r'(_W6-32_17%_$)', "")
-
-andromeda['Sample'] = andromeda['Sample'].str.replace(r'(^\d+_[A-Z]+_[a-z]+_)', "")
-andromeda['Sample'] = andromeda['Sample'].str.replace(r'(_W6-\d+_\d+%_[A-Z]+_$)', "")
-andromeda['Sample'] = andromeda['Sample'].str.replace(r'(^UDN\d+_)', "")
-andromeda['Sample'] = andromeda['Sample'].str.replace(r'(_W6-32_17%_$)', "")
-
-prosit = prosit.sort_values("Sample")
-merged = merged.sort_values("Sample")
-andromeda = andromeda.sort_values("Sample")
+# tims root folder
+tims_folder_1 = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims"
+orbi_folder_1 = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/raw-cid"
+tims_folder_2 = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/d-tims-ii"
+orbi_folder_2 = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/raw"
 
 reorderlist = ["Brain", "Spleen", "Lung", "Thymus", "Liver", "RCC", "HNSCC", "PBMC", "CLL_01", "CLL_02"]
-full_df = prosit.append(merged).append(andromeda)
-# full_df = full_df.sort_values(by=["Sample", "Label"], key=[sorter, sorter_label])
-full_df['Value'] = np.where(full_df['Label'] == 'Lost', -full_df['Value'], full_df['Value'])
 
+orbi_df_1 = prep_multiple_gain_loss(orbi_folder_1, reorderlist)
+tims_df_1 = prep_multiple_gain_loss(tims_folder_1, reorderlist)
+orbi_df_2 = prep_multiple_gain_loss(orbi_folder_2, reorderlist)
+tims_df_2 = prep_multiple_gain_loss(tims_folder_2, reorderlist)
+
+# Plot figure
 plt.figure()
-sns.set_context("talk")
-# width = 6.5
-# height = 8.6
-width = 4.5
-height = 6.0
+sns.set_context("paper")
+cm = 1/2.54  # centimeters in inches
+width = 18*cm
+height = 14*cm
 
-# width = 4
-# height = 5
+fig, axes = plt.subplots(2, 2, figsize=(width, height))
+axes = np.ravel(axes)
 
-fig, ax = plt.subplots(figsize=(width, height))
-ax = sns.barplot(data=full_df, x='Sample', y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist)
-ax.axhline(0, lw=2, color='black')
-ax.legend(loc="center right", bbox_to_anchor=(1.8, 0.5))#,fancybox=True, ncol=1)
-plt.xticks(rotation = 45) # Rotates X-Axis Ticks by 45-degrees
-ylabels = ["{:,.0f}".format(x) + "K" for x in ax.get_yticks()/1000]
-ax.set_yticklabels(ylabels)
-plt.ylabel('unique HLA-I ligands')
-plt.xlabel('Sample')
+sns.barplot(data=orbi_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[0])
+sns.barplot(data=tims_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[1])
+sns.barplot(data=orbi_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[2])
+sns.barplot(data=tims_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[3])
+
+axes[0].set_ylim(-250, 12000)
+axes[1].set_ylim(-250, 12000)
+axes[2].set_ylim(-250, 12000)
+axes[3].set_ylim(-250, 12000)
+
+axes[0].set_ylabel('unique HLA-I ligands')
+axes[2].set_ylabel('unique HLA-II ligands')
+axes[1].set_ylabel('')
+axes[3].set_ylabel('')
+
+axes[0].set_xlabel('')
+axes[1].set_xlabel('')
+
+for ax in axes:
+    ax.set_xticklabels(reorderlist, rotation = 45)
+    # ax.set_xlabel("Sample")
+    ylabels = ["{:,.0f}".format(x) + "K" for x in ax.get_yticks()/1000]
+    ax.set_yticklabels(ylabels)
+
+axes[1].get_legend().remove()
+axes[2].get_legend().remove()
+axes[3].get_legend().remove()
+
+# axes[1].axes.get_yaxis().set_visible(False)
+axes[0].legend(loc='upper left')#, bbox_to_anchor=(1, 1.15)
+
+for i, (ax, c) in enumerate(zip(axes, 'abcd')):
+    ax.annotate(c, xy=(-0.18, 1.05), xycoords='axes fraction',
+                fontsize='xx-large', weight='bold')
 
 sns.despine()
-plot_name = "tims-samples"
+fig.tight_layout()
+
+plot_name = "paper-orbi-vs-tims-samples"
 plt.savefig(directory + f"/{plot_name}_1%_FDR.png", dpi=300, bbox_inches="tight")
 
 # --------------------- Multiple orbi vs tims plots ---------------------
+directory = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/Figures/LSG"
+
 root_folder = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/reresults/raw-cid"
 orbi_pep_target_rescore = load_files_to_dfs(root_folder, "rescore_target.peptides")
 orbi_pep_target = load_files_to_dfs(root_folder, "original_target.peptides")
@@ -411,14 +406,14 @@ full_df = tims.append(merged).append(orbi)
 
 plt.figure()
 sns.set_context("talk")
+# width = 4.5
+# height = 6.0
 width = 4.5
-height = 6.0
-# width = 4
-# height = 5
+height = 4.8
 
 fig, ax = plt.subplots(figsize=(width, height))
-ax = sns.barplot(data=full_df, x='type', y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist)
-# ax = sns.barplot(data=full_df_rescore, x='type', y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist)
+# ax = sns.barplot(data=full_df, x='type', y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist)
+ax = sns.barplot(data=full_df_rescore, x='type', y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist)
 ax.axhline(0, lw=2, color='black')
 ax.legend(loc="center right", bbox_to_anchor=(1.8, 0.5))#,fancybox=True, ncol=1)
 plt.ylim(0, max_value)
@@ -426,11 +421,11 @@ plt.xticks(rotation = 45) # Rotates X-Axis Ticks by 45-degrees
 ylabels = ["{:,.0f}".format(x) + "K" for x in ax.get_yticks()/1000]
 ax.set_yticklabels(ylabels)
 plt.ylabel('unique HLA-I ligands')
-plt.xlabel('Sample')
+plt.xlabel("Sample")
 
 sns.despine()
-plot_name = "Samples-MaxQuant"
-# plot_name = "Samples-Rescore"
+# plot_name = "Samples-MaxQuant"
+plot_name = "Samples-Rescore"
 plt.savefig(directory + f"/{plot_name}_1%_FDR.png", dpi=300, bbox_inches="tight")
 
 # --------------------- Q-value ---------------------
