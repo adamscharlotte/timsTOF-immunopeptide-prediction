@@ -1,6 +1,6 @@
-# timsTOF-immunopeptide
+# timsTOF immunopeptide prediction
 
-
+Here you can find code developed to assess the new TOF Prosit 2023 model for the identification of immunopeptides measured on timsTOF instruments. More information can be found in the [preprint](https://www.biorxiv.org/content/10.1101/2023.07.17.549401v1) named "Fragment ion intensity prediction improves the identification rate of non-tryptic peptides in TimsTOF"
 
 ## Identify Spectra
 in the **Fasta folder** there is a script to create a fasta file (create_fasta.R) and some code to run this script for each pool to generate all the needed fasta files.
