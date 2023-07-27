@@ -60,14 +60,13 @@ cd /scratch/vitor/training/tims_tof
 
 scp -r -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/prediction .
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/prediction/* .
-t3_W1xi_MhG3maK9_a$
 
 # -------------------------------------- DOWNLOAD LOG ---------------------------------------
 
 cd /Users/adams/Projects/300K/2022-library-run/Annotation/log/
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/training/training_log.csv .
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof_frozen_ce/training/training_log.csv .
-t3_W1xi_MhG3maK9_a$
+
 
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/config.yml .
 
@@ -77,16 +76,13 @@ scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof/config.ym
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof_frozen_ce/model.yml .
 
 scp -P 4024 root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof_frozen_ce/model.yml .
-t3_W1xi_MhG3maK9_a$
+
 
 scp -P 4024 /Users/adams/Downloads/model.yml root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof_frozen_ce/
 scp -P 4024 /Users/adams/Downloads/Frozen-me/model.yml root@ac922a.ucc.in.tum.de:/scratch/vitor/training/tims_tof_frozen_ce/
 
 
 # ------------------------------------------ CODE? ------------------------------------------
-
-# ssh -p 4024 root@ac922a.ucc.in.tum.de
-# t3_W1xi_MhG3maK9_a$
 
 # git clone https://gitlab.lrz.de/compmass/prosit/tools/fundamentals.git
 # charlotte.adams
