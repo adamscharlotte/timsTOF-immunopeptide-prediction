@@ -16,10 +16,6 @@
 # scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/precursor-consensus/calibrated-hdf5/precursor-20-ppm-calibrated_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
 # scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/scan-consensus/calibrated-hdf5/scan-40-ppm-calibrated-mapped_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
 scp -P 4024 /Users/adams/Projects/300K/2022-library-run/Annotation/total-scan-consensus/hdf5/scan-40-ppm-calibrated_*.hdf5 root@ac922a.ucc.in.tum.de:/scratch/data/
-t3_W1xi_MhG3maK9_a$
-
-ssh -p 4024 root@ac922a.ucc.in.tum.de
-t3_W1xi_MhG3maK9_a$
 
 # Change config file
 cd /scratch/vitor/training/tims_tof
