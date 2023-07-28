@@ -241,6 +241,52 @@ tims_df_1 = prep_multiple_gain_loss(tims_folder_1, reorderlist)
 orbi_df_2 = prep_multiple_gain_loss(orbi_folder_2, reorderlist)
 tims_df_2 = prep_multiple_gain_loss(tims_folder_2, reorderlist)
 
+root_folder = tims_folder_2
+
+prosit_pep_target = load_files_to_dfs(root_folder, "rescore_target.peptides")
+andromeda_pep_target = load_files_to_dfs(root_folder, "original_target.peptides")
+prosit_pep_target["File"] = prosit_pep_target["RAW_FILE"].str.replace(r'(-\d+$)', "")
+andromeda_pep_target["File"] = andromeda_pep_target["RAW_FILE"].str.replace(r'(-\d+$)', "")
+andromeda_target = andromeda_pep_target[andromeda_pep_target["q-value"] < 0.01]
+prosit_target = prosit_pep_target[prosit_pep_target["q-value"] < 0.01]
+andromeda_target = andromeda_target.drop_duplicates(subset=["RAW_FILE", "peptide"])
+prosit_target = prosit_target.drop_duplicates(subset=["RAW_FILE", "peptide"])
+len(prosit_target)/len(andromeda_target)
+
+
+for df in [andromeda_target, prosit_target]:
+    df["Sample"] = df["File"]
+    df["Sample"] = df["Sample"].str.replace(r'(_Tue39L243_\d+%_orbitrap_DDA_Rep\d)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(_Tue39L243_\d+%_DDA_Rep\d)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(_Tue39L243_\d+%_Rep\d)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(^\d+_[A-Z]+_[a-z]+_)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(^UDN\d+_)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(_W6-\d+_\d+%_[a-z]+_DDA_Rep\d)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(_W6-\d+_\d+%_[A-Z]+_Rep\d)', "")
+    df["Sample"] = df["Sample"].str.replace(r'(_W6-32_17%_Rep\d)', "")
+
+andromeda_target["MaxQuant"] = andromeda_target.groupby("File")['peptide'].transform("count")
+prosit_target["Rescored"] = prosit_target.groupby("File")['peptide'].transform("count")
+andromeda = andromeda_target[["MaxQuant", "File"]].drop_duplicates().reset_index()[["MaxQuant", "File"]].sort_values("File")
+prosit = prosit_target[["Rescored", "File"]].drop_duplicates().reset_index()[["Rescored", "File"]].sort_values("File")
+cat_df = pd.concat([andromeda, prosit], axis=1)
+
+cat_df["Value"] = cat_df["Rescored"]/cat_df["MaxQuant"]
+np.mean(cat_df["Value"])
+
+prosit = prosit.sort_values("Sample")
+merged = merged.sort_values("Sample")
+andromeda = andromeda.sort_values("Sample")
+full_df = prosit.append(merged).append(andromeda)
+full_df['Value'] = np.where(full_df['Label'] == 'Lost', -full_df['Value'], full_df['Value'])
+
+full_df[full_df["Sample"] == "Brain"]
+
+
+
+tims_df_2[tims_df_2["Sample"] == "Brain"]
+orbi_df_1[orbi_df_1["Sample"] == "Brain"]
+
 # Plot figure
 plt.figure()
 sns.set_context("paper")
@@ -251,18 +297,23 @@ height = 14*cm
 fig, axes = plt.subplots(2, 2, figsize=(width, height))
 axes = np.ravel(axes)
 
-sns.barplot(data=orbi_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[0])
-sns.barplot(data=tims_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[1])
-sns.barplot(data=orbi_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[2])
-sns.barplot(data=tims_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#f33b16"], order = reorderlist, errorbar=None, ax = axes[3])
+sns.barplot(data=orbi_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist, errorbar=None, ax = axes[0])
+sns.barplot(data=tims_df_1, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist, errorbar=None, ax = axes[1])
+sns.barplot(data=orbi_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist, errorbar=None, ax = axes[2])
+sns.barplot(data=tims_df_2, x="Sample", y='Value', hue='Label', dodge=False, palette=["#cdeac0", "#7a8db3", "#0e1c36"], order = reorderlist, errorbar=None, ax = axes[3])
 
 axes[0].set_ylim(-250, 12000)
 axes[1].set_ylim(-250, 12000)
 axes[2].set_ylim(-250, 12000)
 axes[3].set_ylim(-250, 12000)
 
-axes[0].set_ylabel('unique HLA-I ligands')
-axes[2].set_ylabel('unique HLA-II ligands')
+axes[0].title.set_text('Orbitrap - CID Prosit 2020')
+axes[1].title.set_text('timsTOF - TOF Prosit 2023')
+axes[2].title.set_text('Orbitrap - HCD Prosit 2020')
+axes[3].title.set_text('timsTOF - TOF Prosit 2023')
+
+axes[0].set_ylabel('Unique HLA-I ligands')
+axes[2].set_ylabel('Unique HLA-II ligands')
 axes[1].set_ylabel('')
 axes[3].set_ylabel('')
 
@@ -290,7 +341,7 @@ sns.despine()
 fig.tight_layout()
 
 plot_name = "paper-orbi-vs-tims-samples"
-plt.savefig(directory + f"/{plot_name}_1%_FDR.png", dpi=300, bbox_inches="tight")
+plt.savefig(directory + f"/{plot_name}.png", dpi=300, bbox_inches="tight")
 
 # --------------------- Multiple orbi vs tims plots ---------------------
 directory = "/media/kusterlab/internal_projects/active/ProteomeTools/ProteomeTools/External_data/Bruker/PXD038782-comparison/Figures/LSG"
