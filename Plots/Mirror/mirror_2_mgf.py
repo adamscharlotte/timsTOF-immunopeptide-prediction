@@ -156,7 +156,7 @@ charge = "1"
 peptide = "GVDAANSAAQQY"
 
 mgf2_filename="/Users/adams/Downloads/02446d_GD1-TUM_HLA_133_01_01-3xHCD-1h-R4.mgf"
-mgf1_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
+mgf1_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/HLAI_p2_97_178_p2-D1_S1-D1_1_6866.mgf"
 # mgf2_filename="/Users/adams/Projects/300K/2022-library-run/Annotation/mapped-summed-mgf/TUM_HLA_133-3.mgf"
 # mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_hcd_pred.mgf"
 # mgf2_filename="/Users/adams/Projects/300K/PXD038782-comparison/mgf/HLA_133_tims_pred.mgf"
