@@ -35,7 +35,6 @@ def read_hdf5_to_dataframe(file_path, keys=None):
     # df = pd.DataFrame(data_dict)
     return data_dict
 
-
 def get_spectral_angle(intensities):
     pred= np.array(intensities[0])
     true = np.array(intensities[1])
@@ -52,7 +51,6 @@ def get_spectral_angle(intensities):
     product = np.sum(true_norm*pred_norm, axis=0)
     arccos = np.arccos(product)
     return 1-2*arccos/np.pi
-
 
 # ---------------------- Import data ----------------------
 base_path = "/Users/adams/Projects/300K/2022-library-run/training-sets/"  # nolint
@@ -139,38 +137,7 @@ tof_df["CE_TOF"] = tof_df["CE_TOF"].apply(int)
 hcd_tof_df = pd.merge(hcd_df, tof_df, how="inner", on=["precursor_charge_onehot", "sequence_integer"])
 hcd_tof_df["SPECTRAL_ANGLE"] = hcd_tof_df[['INTENSITY_TOF','INTENSITY_HCD']].apply(lambda x : get_spectral_angle(x), axis=1)
 
-sorted(set(hcd_tof_df["CE_HCD"].tolist()))
-sorted(set(hcd_tof_df["CE_TOF"].tolist()))
-
 mean_df = hcd_tof_df[["CE_HCD", "CE_TOF", "SPECTRAL_ANGLE"]].groupby(["CE_HCD", "CE_TOF"]).median("SPECTRAL_ANGLE").reset_index()
-hcds = sorted(mean_df["CE_HCD"].unique())
-tofs = sorted(mean_df["CE_TOF"].unique())
-
-hcd_tof_df["precursor_charge_onehot"] = hcd_tof_df["precursor_charge_onehot"].apply(str)
-hcd_tof_df.value_counts("precursor_charge_onehot")
-hcd_tof_df["sequence_integer"] = hcd_tof_df["sequence_integer"].apply(str)
-hcd_tof_df.value_counts("sequence_integer")
-count = hcd_tof_df[["sequence_integer", "precursor_charge_onehot"]].drop_duplicates()
-count.value_counts("precursor_charge_onehot")
-hcd_df.value_counts("sequence_integer")
-hcd_df[hcd_df["sequence_integer"] == "[17, 8, 16, 16, 10, 4, 4, 8, 18, 4, 9, 14, 6, 3, 17, 8, 4, 20, 10, 9, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0]"]
-
-ce_matrix = np.ndarray(shape=[len(hcds), len(tofs)])
-
-for i, hcd in enumerate(hcds):
-    for j, tof in enumerate(tofs):
-        mean_sa = mean_df[(mean_df["CE_HCD"] == hcd) & (mean_df["CE_TOF"] == tof)]["SPECTRAL_ANGLE"]
-        if len(mean_sa) == 0:
-            ce_matrix[i,j] = np.nan
-        else:
-            ce_matrix[i,j] = mean_sa.iloc[0]
-
-
-# piv = mean_df.pivot_table(index=['CE_HCD'], columns='CE_TOF').sort_index(level=2)
-# piv.columns = piv.columns.get_level_values(1)
-# piv = piv.reset_index().rename_axis(None, axis=1)
-# piv = piv.set_index(['CE_HCD'])
-
 glue = mean_df.pivot("CE_HCD", "CE_TOF", "SPECTRAL_ANGLE")
 
 cm = 1/2.54  # centimeters in inches
@@ -182,8 +149,6 @@ sns.set_style("whitegrid", {'axes.grid' : False})
 sns.set_context("paper")
 
 cmap0 = mpl.colors.LinearSegmentedColormap.from_list(
-        # 'green2red', ['#cdeac0', '#0e1c36'])
-        # 'green2red', ['#0e1c36' ,'#7a8db3', '#f33b16'])
         'green2red', ['#0E1C36' ,'#7a8db3', '#C4E6B3'])
 
 # plotting the heatmap
