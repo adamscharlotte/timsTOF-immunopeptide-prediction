@@ -1,6 +1,8 @@
 # /Users/adams/opt/miniconda3/envs/spectrum_utils/bin/python3
 
 import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
+import matplotlib.patches as mpatches
 import statistics
 import pandas as pd
 import numpy as np
@@ -192,22 +194,128 @@ sort_c_term = sorted(c_term)
 df_test_train_map["RAW_FILE"]
 df_test_train_filtered["length"]
 
-violin_plot(df_test_train_filtered, "n_term", "N-terminus",
-    [14, 5], "test-vs-train/n_term", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"], sort_n_term)
-violin_plot(df_test_train_filtered, "c_term", "C-terminus",
-    [14, 5], "test-vs-train/c_term", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"], sort_c_term)
-violin_plot(df_test_train_filtered, "length", "Peptide length", [14, 5],
-    "test-vs-train/length", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"])
-violin_plot(df_test_train_filtered, "type", "", [8, 5],
-    "test-vs-train/type", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"])
-violin_plot(df_test_train_filtered, "PRECURSOR_CHARGE", "Precursor charge", [6, 5],
-    "test-vs-train/charge", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"])
-violin_plot(df_test_train_filtered, "type", "", [4, 3],
-    "test-vs-train/type", ["Training set", "Test set"],
-    ["#7A8DB3", "#022873"], order)
-violin_plot(df_prediction_filtered, "PRECURSOR_CHARGE", "Precursor charge", [6, 5])
+df_test_train_filtered = df_test_train_filtered[df_test_train_filtered["length"] < 30]
+df_test_train_filtered["aligned_collision_energy"] = df_test_train_filtered["aligned_collision_energy"].astype(int)
+max(df_test_train_filtered["length"])
+min(df_test_train_filtered["aligned_collision_energy"])
+
+sns.set_context("paper")
+sns.set_style("whitegrid")
+
+cm = 1/2.54  # centimeters in inches
+width = 18*cm
+height = 12*cm
+# constrained_layout=True, 
+fig = plt.figure(figsize=(width, height))
+axes = fig.subplot_mosaic([
+     ['a', 'b', 'b', 'b'],
+     ['c', 'c', 'c', 'c']])
+
+sns.violinplot(x="PRECURSOR_CHARGE", y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
+                    edgecolor=None, linewidth=0,
+                    palette=["#022873", "#7a8db3"],
+                    hue_order=["Training set", "Test set"], order=[1,2,3],
+                    data=df_test_train_filtered, split=True, ax=axes['a'])
+axes['a'].set_xlabel("Precursor charge\n")
+
+sns.violinplot(x="length", y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
+                    edgecolor=None, linewidth=0,
+                    palette=["#022873", "#7a8db3"],
+                    hue_order=["Training set", "Test set"], #order=[1,2,3],
+                    data=df_test_train_filtered, split=True, ax=axes['b'])
+axes['b'].set_xlabel("Peptide length")
+
+sns.violinplot(x="aligned_collision_energy", y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
+                    edgecolor=None, linewidth=0,
+                    palette=["#022873", "#7a8db3"],
+                    hue_order=["Training set", "Test set"], #order=[1,2,3],
+                    data=df_test_train_filtered, split=True, ax=axes['c'])
+axes['c'].set_xlabel("Aligned collision energy")
+
+ax_list = [axes['a'], axes['b'], axes['c']]
+for ax in ax_list:
+    ax.set_ylabel("Spectral angle")
+    ax.spines["right"].set_color("none")
+    ax.spines["top"].set_color("none")
+    ax.spines["left"].set_color("none")
+    ax.spines["bottom"].set_color("none")
+    ax.yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
+    ax.get_legend().remove()
+    ax.set_ylim(0, 1)
+
+sns.despine()
+fig.tight_layout()
+
+handles, labels = axes["b"].get_legend_handles_labels()
+fig.legend(handles=handles, loc='upper center', ncol=2,
+                # handlelength=1, handleheight=1, handletextpad=0.4,
+                bbox_to_anchor=(0.5, 1.07),
+                # fontsize="7",
+                frameon=False, columnspacing = 0.7)
+
+for label, ax in axes.items():
+    # label physical distance to the left and up:
+    trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    ax.text(0.0, 1, label, transform=ax.transAxes + trans,
+            fontsize='x-large', va='bottom', weight='bold')
+
+plot_path = "/Users/adams/Projects/300K/Results/Figures/supplementary-violin-1.png"
+plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+
+
+
+sns.set_context("paper")
+sns.set_style("whitegrid")
+
+cm = 1/2.54  # centimeters in inches
+width = 18*cm
+height = 12*cm
+# constrained_layout=True, 
+fig = plt.figure(figsize=(width, height))
+axes = fig.subplot_mosaic([['a'], ['b']])
+
+sns.violinplot(x="n_term", y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
+                    edgecolor=None, linewidth=0,
+                    palette=["#022873", "#7a8db3"],
+                    hue_order=["Training set", "Test set"], order=sort_n_term,
+                    data=df_test_train_filtered, split=True, ax=axes['a'])
+axes['a'].set_xlabel("N-terminus\n")
+
+sns.violinplot(x="c_term", y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
+                    edgecolor=None, linewidth=0,
+                    palette=["#022873", "#7a8db3"],
+                    hue_order=["Training set", "Test set"], order=sort_c_term,
+                    data=df_test_train_filtered, split=True, ax=axes['b'])
+axes['b'].set_xlabel("C-terminus")
+
+
+ax_list = [axes['a'], axes['b']]
+for ax in ax_list:
+    ax.set_ylabel("Spectral angle")
+    ax.spines["right"].set_color("none")
+    ax.spines["top"].set_color("none")
+    ax.spines["left"].set_color("none")
+    ax.spines["bottom"].set_color("none")
+    ax.yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
+    ax.get_legend().remove()
+    ax.set_ylim(0, 1)
+
+sns.despine()
+fig.tight_layout()
+
+handles, labels = axes["b"].get_legend_handles_labels()
+fig.legend(handles=handles, loc='upper center', ncol=2,
+                # handlelength=1, handleheight=1, handletextpad=0.4,
+                bbox_to_anchor=(0.5, 1.07),
+                # fontsize="7",
+                frameon=False, columnspacing = 0.7)
+
+for label, ax in axes.items():
+    # label physical distance to the left and up:
+    trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    ax.text(0.0, 1, label, transform=ax.transAxes + trans,
+            fontsize='x-large', va='bottom', weight='bold')
+
+plot_path = "/Users/adams/Projects/300K/Results/Figures/supplementary-violin-2.png"
+plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+
