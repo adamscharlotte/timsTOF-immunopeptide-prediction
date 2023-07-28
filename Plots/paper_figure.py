@@ -95,10 +95,22 @@ data_nontryptic = {'Category': ['Non-Tryptic', 'Non-Tryptic', 'Non-Tryptic'],
         'Validation': [1745, 4420, 1613],
         'Test': [1943, 4623, 1306]}
 
+data = {'Category': ['Non-Tryptic', 'Non-Tryptic', 'Non-Tryptic'],
+        'Charge': [1, 2, 3],
+        'Training-tryp': [0,125075, 28734],
+        'Validation-tryp': [0,13316, 3167],
+        'Test-tryp': [0,10794, 3468],
+        'Training': [20652, 45263, 11662],
+        'Validation': [1745, 4420, 1613],
+        'Test': [1943, 4623, 1306]}
+
 df_tryptic = pd.DataFrame(data_tryptic)
 df_nontryptic = pd.DataFrame(data_nontryptic)
 tryptic_melt = pd.melt(df_tryptic, id_vars=['Category', 'Charge'], var_name='Condition', value_name='Peptide')
 nontryptic_melt = pd.melt(df_nontryptic, id_vars=['Category', 'Charge'], var_name='Condition', value_name='Peptide')
+
+df_data = pd.DataFrame(data)
+df_data_melt = pd.melt(df_data, id_vars=['Category', 'Charge'], var_name='Condition', value_name='Peptide')
 
 # Data for Violin Plot
 
@@ -202,28 +214,17 @@ cm = 1/2.54  # centimeters in inches
 width = 18*cm
 height = 17*cm
 
-fig = plt.figure(constrained_layout=True, figsize=(width, height))
-top, bottom = fig.subfigures(nrows=2, ncols=1, height_ratios=[1,2])
-axt = top.subplot_mosaic([['a','a', '', '', '']])
-# axt = top.subplot_mosaic([['a', '']])
-axb = bottom.subplot_mosaic([['b', 'c'], ['b', 'd']])
-# axb = bottom.subplot_mosaic([['a', ''], ['b', 'c'], ['b', 'd']])
-# axes = fig.subplot_mosaic([['a', 'a', 'a', 'a', '', '', '', '', '', ''],['b', 'b','b', 'b', 'b', 'c', 'c', 'c', 'c', 'c'],['b', 'b','b', 'b','b', 'd', 'd', 'd', 'd', 'd']])
-# axes = fig.subplot_mosaic([['a', 'a','a', '', '', ''],['b', 'b','b','c', 'c', 'c'],['b', 'b','b','d', 'd', 'd']])
+fig = plt.figure(figsize=(width, height))
+axes = fig.subplot_mosaic([['a', 'a'],['b', 'c'], ['b', 'd']])
 
 # Bar Plots
-sns.barplot(data=tryptic_melt, x='Condition', y='Peptide', hue='Charge',
-                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = axt['a'])
-axt['a'].set_title("Tryptic")
-axt['a'].set_ylabel("Number of PSMs")
+sns.barplot(data=df_data_melt, x='Condition', y='Peptide', hue='Charge',
+                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = axes['a'])
+axes['a'].set_title("")
+axes['a'].set_ylabel("Number of PSMs")
+axes['a'].legend(frameon=False, title = "Charge state")
 
-sns.barplot(data=nontryptic_melt, x='Condition', y='Peptide', hue='Charge',
-                palette=["#CDEAC0", "#0E1C36", "#7A8DB3"], ax = axt[''])
-axt[''].set_title("Non-Tryptic")
-axt[''].set_ylabel('')
-axes_list = [axt['a'], axt['']]
-axt[''].legend(frameon=False, title = "Charge state")
-
+axes_list = [axes['a']]
 for ax in axes_list:
     ax.set_ylim(0, 125000)
     ax.set_xlabel('\n\n')
@@ -235,11 +236,18 @@ for ax in axes_list:
     ax.spines["left"].set_color("none")
     ax.spines["bottom"].set_color("none")
     ax.yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
-    # ax.tick_params(axis="x", colors="#464646")
-    # ax.tick_params(axis="y", colors="#464646")
+    labels = [item.get_text() for item in ax.get_xticklabels()]
+    labels[0] = 'Training'
+    labels[1] = 'Validation'
+    labels[2] = 'Test'
+    ax.set_xticklabels(labels)
 
-axt['a'].get_legend().remove()
-axt[''].yaxis.set_ticklabels([])
+axes['a'].text(0.85,132000,"Tryptic")
+axes['a'].text(3.7,132000,"Non-tryptic")
+
+
+# axt['a'].get_legend().remove()
+# axt[''].yaxis.set_ticklabels([])
 
 # Violin Plot
 order = ["MHC-I", "MHC-II", "LysN", "AspN", "Tryptic"]
@@ -250,43 +258,43 @@ sns.violinplot(x="type",y="SPECTRAL_ANGLE", hue="LABEL", inner=None,
                     hue_order=["TOF Prosit 2023", "HCD Prosit 2020"],
                     order=order,
                     data=df_prediction_filtered, split=True,
-                    ax=axb['b'])
+                    ax=axes['b'])
 
-axb['b'].legend(
+axes['b'].legend(
     loc='upper center', 
     bbox_to_anchor=(0.5, 1.05),
     ncol=2, frameon=False
 )
-axb['b'].set_ylabel("Spectral angle", color="black")
-axb['b'].set(xlabel=None)
-axb['b'].spines["right"].set_color("none")
-axb['b'].spines["top"].set_color("none")
-axb['b'].spines["left"].set_color("none")
-axb['b'].spines["bottom"].set_color("none")
-axb['b'].yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
-# axb['b'].tick_params(axis="x", colors="#464646")
-# axb['b'].tick_params(axis="y", colors="#464646")
+axes['b'].set_ylabel("Spectral angle", color="black")
+axes['b'].set(xlabel=None)
+axes['b'].spines["right"].set_color("none")
+axes['b'].spines["top"].set_color("none")
+axes['b'].spines["left"].set_color("none")
+axes['b'].spines["bottom"].set_color("none")
+axes['b'].yaxis.grid(True, linewidth=0.5, which="major", color="lightgrey", alpha=0.5)
+# axes['b'].tick_params(axis="x", colors="#464646")
+# axes['b'].tick_params(axis="y", colors="#464646")
 # ax_x = plt.gca().xaxis
 # ax_x.set_tick_params(pad=-5)
-axb['b'].tick_params(axis='x', pad=0)
+axes['b'].tick_params(axis='x', pad=0)
 
 # Mirror Plot
 sup.colors["y"] = "#F33B16"
 sup.colors["b"] = "#7A8DB3"
 
-sup.mirror(mgf1_spectrum, mgf2_spectrum, ax = axb['c'])
-sup.mirror(mgf1_spectrum, mgf3_spectrum, ax = axb['d'])
+sup.mirror(mgf1_spectrum, mgf2_spectrum, ax = axes['c'])
+sup.mirror(mgf1_spectrum, mgf3_spectrum, ax = axes['d'])
 
-axb['c'].text(1000,1, "SA=0.54")
-axb['d'].text(1000,1,"SA=0.82")
+axes['c'].text(1000,1,"SA=0.54")
+axes['d'].text(1000,1,"SA=0.82")
 
-# axb['c'].text(10,1, "TimsTOF")
-# axb['d'].text(10,1, "TimsTOF")
+# axes['c'].text(10,1, "TimsTOF")
+# axes['d'].text(10,1, "TimsTOF")
 
-# axb['c'].text(10,-1.1, "HCD Prosit 2020")
-# axb['d'].text(10,-1.1, "TOF Prosit 2023")
+# axes['c'].text(10,-1.1, "HCD Prosit 2020")
+# axes['d'].text(10,-1.1, "TOF Prosit 2023")
 
-ax_mir = [axb['c'], axb['d']]
+ax_mir = [axes['c'], axes['d']]
 for ax in ax_mir:
     ax.grid(False, which="both")
     ax.set_ylim(-1.3, 1.1)
@@ -294,15 +302,9 @@ for ax in ax_mir:
     ax.tick_params(axis='x', pad=3)
 
 sns.despine()
-plt.tight_layout(pad=0.4)
+plt.tight_layout(pad=0.4, w_pad=1, h_pad=1)
 
-for label, ax in axt.items():
-    # label physical distance to the left and up:
-    trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
-    ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
-            fontsize='x-large', va='bottom', weight='bold')
-
-for label, ax in axb.items():
+for label, ax in axes.items():
     # label physical distance to the left and up:
     trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
