@@ -186,9 +186,9 @@ prosit.groupby(['Sample'])['Value'].mean()/andromeda.groupby(['Sample'])['Value'
 
 # Data needed for the logo plots
 
-gained_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_gained.txt", sep=" ")
-shared_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_shared.txt", sep=" ")
-lost_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_lost.txt", sep=" ")
+gained_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_g1.txt", sep=" ")
+shared_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_s1.txt", sep=" ")
+lost_psfm = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_l1.txt", sep=" ")
 psfm_0101 = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/PSFM_0101.txt", sep=" ")
 
 inf_lost_matrix = transform_matrix(lost_psfm,
@@ -240,16 +240,6 @@ counts_sb = hla_merged[hla_merged["min_binding_score"] < 0.5].value_counts("Labe
 
 counts_wb/counts
 counts_sb/counts
-orf_merged.unmod_peptides
-hla_merged.columns
-hla_orf = pd.merge(orf_merged, hla_merged, on = ["RAW_FILE", "unmod_peptides"])
-counts = hla_orf.value_counts("Label_y")
-orf_wb = hla_orf[hla_orf["min_binding_score"] <= 2].value_counts("Label_y")
-orf_sb = hla_orf[hla_orf["min_binding_score"] <= 0.5].value_counts("Label_y")
-orf_wb/counts
-orf_sb/counts
-len(hla_orf[hla_orf["min_binding_score"] < 2])/len(hla_orf)
-len(hla_orf[hla_orf["min_binding_score"] < 0.5])/len(hla_orf)
 
 # Data needed for the ORF Plot
 headers = []
@@ -298,15 +288,7 @@ sns.set_style("whitegrid", {'axes.grid' : False})
 cm = 1/2.54  # centimeters in inches
 width = 18*cm
 height = 24*cm
-# constrained_layout=True, 
 fig = plt.figure(figsize=(width, height))
-# axes = fig.subplot_mosaic([
-#      ['a', 'b'],
-#      ['a', ''],
-#      ['c', ' '],
-#      ['c', '  '],
-#      ['d', 'BLANK'],
-#      ['d', 'BLANK']], empty_sentinel="BLANK")
 axes = fig.subplot_mosaic([
      ['a', 'b'],
      ['a', 'b'],
@@ -362,7 +344,6 @@ logomaker.Logo(inf_0101,
                 vpad=.1,
                 width=.8,
                 ax = axes['b'])
-
 logomaker.Logo(inf_gained_matrix,
                 color_scheme=color_dict,
                 center_values=True,
@@ -387,7 +368,7 @@ for ax in motif_axes:
     ax.set(xticks=np.arange(1, 10))
     ax.set_ylabel("Bits", labelpad=-0.5)
 
-axes['b'].set_title("HLA-A*0101", fontweight = "bold", y=0.9, pad=-1)
+axes['b'].set_title("HLA-A*01:01", fontweight = "bold", y=0.9, pad=-1)
 axes[''].set_title("Gained", fontweight = "bold", y=0.9, pad=-1)
 axes[' '].set_title("Shared", fontweight = "bold", y=0.9, pad=-1)
 axes['  '].set_title("Lost", fontweight = "bold", y=0.9, pad=-1)
@@ -437,8 +418,6 @@ leg = axes["d"].legend([handles[i] for i in order], [labels[i] for i in order],
 
 leg._legend_box.align = "left"
 sns.despine()
-# fig.tight_layout(pad=0.4, w_pad=-10, h_pad=0.2)
-# fig.tight_layout(pad=0.5, w_pad=1, h_pad=0.2)
 fig.tight_layout(pad=0.5)
 
 for label, ax in axes.items():
@@ -449,35 +428,3 @@ for label, ax in axes.items():
 
 plot_path = "/Users/adams/Projects/300K/Results/Figures/paper-fig-4.png"
 plt.savefig(plot_path, dpi=300, bbox_inches="tight")
-
-
-
-
-# lost_matrix = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/lost_matrix.txt", sep=" ")
-# gained_matrix = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/gained_matrix.txt", sep=" ")
-# shared_matrix = pd.read_csv("/Users/adams/Projects/300K/MSV000091456-SCP/shared_matrix.txt", sep=" ")
-
-# lsg_df, maxquant_df, rescored_df = read_file_list(file_list, ["RAW_FILE", "Proteins"])
-# orf_max = pd.merge(full_orf_df, maxquant_df, on = ["RAW_FILE", "Proteins"])
-# orf_rescored = pd.merge(full_orf_df, rescored_df, on = ["RAW_FILE", "Proteins"])
-
-# orf_max.value_counts("full_prot")
-# orf_rescored.value_counts("full_prot")
-
-
-# def kl(p, q):
-#     """Kullback-Leibler divergence D(P || Q) for discrete distributions
-#     Parameters
-#     ----------
-#     p, q : array-like, dtype=float, shape=n
-#     Discrete probability distributions.
-#     """
-#     p = np.asarray(p, dtype=np.float)
-#     q = np.asarray(q, dtype=np.float)
-#     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
-
-# kl(inf_gained_matrix, inf_0101)
-# kl(inf_0101, inf_shared_matrix)
-# kl(inf_shared_matrix, inf_0101)
-# kl(inf_lost_matrix, inf_0101)
-# kl(inf_0101, inf_lost_matrix)
