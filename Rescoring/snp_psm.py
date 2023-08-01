@@ -169,6 +169,12 @@ lsg_df.value_counts("Label")
 
 full_orf_df["RAW_FILE"] = ["-".join(item.split("-")[0:2]) for item in full_orf_df["PSMId"]]
 lgs_orf = pd.merge(full_orf_df, lsg_df, on=["RAW_FILE", "unmod_peptides"])
+unique_lgs_orf = lgs_orf[["RAW_FILE", "Label", "Proteins", "unmod_peptides"]].drop_duplicates()
+unique_lgs = lsg_df[["RAW_FILE", "Label", "unmod_peptides"]].drop_duplicates()
+
+# 2% of immunopeptides could be mapped to nuORFs
+2251/102539
+
 unique_lgs_orf = lgs_orf[["RAW_FILE", "Label", "Proteins"]].drop_duplicates()
 unique_lgs_orf.groupby(["Label"])["Label"].count()
 unique_lgs_orf.value_counts("Proteins")
