@@ -67,7 +67,7 @@ for charge, df_charge in grouped_charge_df:
     top_10p_df["SPECTRAL_ANGLE"].fillna(0, inplace=True)
     groups = top_10p_df.groupby(by=["ORIG_COLLISION_ENERGY", "COLLISION_ENERGY", "MASS"])["SPECTRAL_ANGLE"].mean()
     groups_2 = groups.reset_index()
-    ids = groups_2.groupby(["ORIG_COLLISION_ENERGY"])["SPECTRAL_ANGLE"].transform(max) == groups_2["SPECTRAL_ANGLE"]
+    ids = groups_2.groupby(["ORIG_COLLISION_ENERGY", "MASS"])["SPECTRAL_ANGLE"].transform(max) == groups_2["SPECTRAL_ANGLE"]
     calib_group = groups_2[ids]
     calib_group["delta_collision_energy"] = calib_group["COLLISION_ENERGY"] - calib_group["ORIG_COLLISION_ENERGY"]
     # Fit a linear model
